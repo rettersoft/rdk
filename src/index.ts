@@ -224,10 +224,12 @@ const lambda = new Lambda()
 
 async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
     const { OPERATIONS_LAMBDA, CLOUD_OBJECTS_TOKEN } = process.env
-    return lambda.invoke({
+    return lambda
+        .invoke({
             FunctionName: OPERATIONS_LAMBDA!,
-            Payload: new TextEncoder().encode(JSON.stringify({ data: payload, token: CLOUD_OBJECTS_TOKEN! })),
-        }).promise()
+            Payload: JSON.stringify({ data: payload, token: CLOUD_OBJECTS_TOKEN! }),
+        })
+        .promise()
         .then(({ FunctionError: e, Payload: response }) => {
             if (e) throw new Error(e)
 
