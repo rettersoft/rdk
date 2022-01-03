@@ -1,0 +1,24 @@
+{
+  "name": "@retter/rdk",
+  "version": "1.0.0",
+  "description": "Retter development kit",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -b",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rettersoft/rdk.git"
+  },
+  "author": "Retter",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "17.0.7",
+    "aws-sdk": "2.1048.0",
+    "typescript": "4.1.3"
+  }
+}
