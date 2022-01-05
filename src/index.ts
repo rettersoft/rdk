@@ -85,6 +85,7 @@ export interface GetGlobalMemory {
 
 export interface SetGlobalMemory extends GetGlobalMemory {
     value: any
+    expireAt?: number
 }
 export interface GetFromSortedSet {
     setName: string
