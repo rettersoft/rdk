@@ -1,15 +1,15 @@
-interface KeyValue {
+export interface KeyValue {
     [key: string]: any
 }
-interface KeyValueString {
+export interface KeyValueString {
     [key: string]: string
 }
 
-interface Configuration {
+export interface Configuration {
     stepLimit?: number
 }
 
-interface OperationResponse {
+export interface OperationResponse {
     success: boolean
     data?: any
     error?: string
@@ -59,14 +59,14 @@ export interface Context {
     relatedUserId?: string
 }
 
-interface State {
+export interface State {
     public?: KeyValue
     private?: KeyValue
     user?: { [userId: string]: { [key: string]: any } }
     role?: { [identity: string]: { [key: string]: any } }
 }
 
-interface Schedule {
+export interface Schedule {
     classId?: string
     instanceId?: string
     payload?: any
@@ -101,18 +101,18 @@ interface GetGlobalMemory {
     key: string
 }
 
-interface SetGlobalMemory extends GetGlobalMemory {
+export interface SetGlobalMemory extends GetGlobalMemory {
     value: any
 }
-interface GetFromSortedSet {
+export interface GetFromSortedSet {
     setName: string
     sortKey: string
 }
 
-interface AddToSortedSet extends GetFromSortedSet {
+export interface AddToSortedSet extends GetFromSortedSet {
     data: Record<string, unknown>
 }
-interface QuerySortedSet {
+export interface QuerySortedSet {
     setName: string
     beginsWith?: string
     greaterOrEqual?: string
@@ -122,21 +122,21 @@ interface QuerySortedSet {
     limit?: number
 }
 
-interface GetFile {
+export interface GetFile {
     filename: string
 }
 
-interface SetFile extends GetFile {
+export interface SetFile extends GetFile {
     body: string
 }
-interface LookUpKey {
+export interface LookUpKey {
     key: {
         name: string
         value: string
     }
 }
 
-interface GetInstance {
+export interface GetInstance {
     httpMethod?: string
     queryStringParams?: KeyValueString
     headers?: KeyValueString
@@ -148,7 +148,7 @@ interface GetInstance {
         value: string
     }
 }
-interface MethodCall extends GetInstance {
+export interface MethodCall extends GetInstance {
     methodName: string
 }
 
