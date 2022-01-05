@@ -14,7 +14,12 @@ export interface OperationResponse {
     data?: any
     error?: string
 }
-
+export interface GenerateCustomTokenResponse extends OperationResponse {
+    data: {
+        accesToken: string
+        refreshToken: string
+    }
+}
 export interface CloudObjectResponse {
     statusCode: number
     body?: any
@@ -74,30 +79,7 @@ export interface Schedule {
     after: number
 }
 
-interface RbsActionResponse {
-    errorCode: string
-    serviceId: string
-    status: number
-    errors: string[]
-    response: any
-    durationInMilliseconds: number
-    executionDurationInMilliseconds: number
-    headers: KeyValueString
-    isExtract: boolean
-}
-
-interface RbsAction {
-    name: string
-    data?: KeyValue
-    targetServiceIds?: string[]
-    headers?: {
-        classId: string
-        instanceId: string
-    }
-    response?: RbsActionResponse[]
-}
-
-interface GetGlobalMemory {
+export interface GetGlobalMemory {
     key: string
 }
 
@@ -157,9 +139,13 @@ export interface InitResponse {
     config?: Configuration
     response?: Response
 }
+export interface GenerateCustomToken {
+    userId: string
+    identity: string
+    claims: KeyValue
+}
 
 export interface ReadOnlyOperationsInput {
-    rbsAction?: RbsAction[]
     getGlobalMemory?: GetGlobalMemory[]
     getFromSortedSet?: GetFromSortedSet[]
     querySortedSet?: QuerySortedSet[]
@@ -167,6 +153,7 @@ export interface ReadOnlyOperationsInput {
     getLookUpKey?: LookUpKey[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
+    generateCustomToken?: GenerateCustomToken[]
 }
 
 export interface OperationsInput extends ReadOnlyOperationsInput {
@@ -180,7 +167,6 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
 }
 
 export interface ReadonlyOperationsOutput {
-    rbsAction?: RbsActionResponse[]
     getGlobalMemory?: OperationResponse[]
     getFromSortedSet?: OperationResponse[]
     querySortedSet?: OperationResponse[]
@@ -188,6 +174,7 @@ export interface ReadonlyOperationsOutput {
     getLookUpKey?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: CloudObjectResponse[]
+    generateCustomToken?: GenerateCustomTokenResponse[]
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -245,8 +232,8 @@ export default class CloudObjectsOperator {
     private async sendSingleOperation(input: any, operationType: string) {
         return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
     }
-    async rbsAction(input: RbsAction): Promise<RbsActionResponse | undefined> {
-        return this.sendSingleOperation(input, this.rbsAction.name)
+    async generateCustomToken(input: GenerateCustomToken): Promise<GenerateCustomTokenResponse | undefined> {
+        return this.sendSingleOperation(input, this.generateCustomToken.name)
     }
     async methodCall(input: MethodCall): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.methodCall.name)
@@ -294,9 +281,9 @@ export default class CloudObjectsOperator {
 
 class CloudObjectsPipeline {
     private payload: OperationsInput = {}
-    rbsAction(input: RbsAction): CloudObjectsPipeline {
-        if (!this.payload.rbsAction) this.payload.rbsAction = []
-        this.payload.rbsAction.push(input)
+    generateCustomToken(input: GenerateCustomToken): CloudObjectsPipeline {
+        if (!this.payload.generateCustomToken) this.payload.generateCustomToken = []
+        this.payload.generateCustomToken.push(input)
         return this
     }
     getLookUpKey(input: LookUpKey): CloudObjectsPipeline {
