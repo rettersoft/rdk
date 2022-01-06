@@ -16,8 +16,7 @@ export interface OperationResponse {
 }
 export interface GenerateCustomTokenResponse extends OperationResponse {
     data: {
-        accesToken: string
-        refreshToken: string
+        customToken: string
     }
 }
 export interface CloudObjectResponse {
@@ -143,7 +142,7 @@ export interface InitResponse {
 export interface GenerateCustomToken {
     userId: string
     identity: string
-    claims: KeyValue
+    claims?: KeyValue
 }
 
 export interface ReadOnlyOperationsInput {
