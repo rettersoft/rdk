@@ -25,7 +25,7 @@ export interface CloudObjectResponse<T = any> {
     headers?: KeyValueString
 }
 
-export interface Response<T> extends CloudObjectResponse<T> {
+export interface Response<T = any> extends CloudObjectResponse<T> {
     isBase64Encoded?: boolean
 }
 
