@@ -63,11 +63,14 @@ export interface Context {
     relatedUserId?: string
 }
 
-export interface State {
-    public?: KeyValue
-    private?: KeyValue
-    user?: { [userId: string]: { [key: string]: any } }
-    role?: { [identity: string]: { [key: string]: any } }
+type UserState = { [userId: string]: { [key: string]: any } }
+type RoleState = { [identity: string]: { [key: string]: any } }
+
+export interface State<PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
+    public?: PUB
+    private?: PRIV
+    user?: USER
+    role?: ROLE
 }
 
 export interface Schedule {
@@ -186,20 +189,21 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteLookUpKey?: OperationResponse[]
 }
 
-export interface StepResponse<T = any> {
-    state?: State
-    methodState?: State
+export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
+    state?: State<PUB, PRIV, USER, ROLE>
+    methodState?: State<PUB, PRIV, USER, ROLE>
     response?: Response<T>
     nextFlowId?: string
 }
 
-export interface Data<I = any, O = any> extends StepResponse<O> {
+export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState>
+    extends StepResponse<O, PUB, PRIV, USER, ROLE> {
     context: Context
     env: KeyValue
     config: Configuration
     version: number
-    state: State
-    methodState: State
+    state: State<PUB, PRIV, USER, ROLE>
+    methodState: State<PUB, PRIV, USER, ROLE>
     request?: Request<I>
     response: Response<O>
     schedule: Schedule[]
