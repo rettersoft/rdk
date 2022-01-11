@@ -19,19 +19,19 @@ export interface GenerateCustomTokenResponse extends OperationResponse {
         customToken: string
     }
 }
-export interface CloudObjectResponse {
+export interface CloudObjectResponse<T = any> {
     statusCode: number
-    body?: any
+    body?: T
     headers?: KeyValueString
 }
 
-export interface Response extends CloudObjectResponse {
+export interface Response<T> extends CloudObjectResponse<T> {
     isBase64Encoded?: boolean
 }
 
-export interface Request {
+export interface Request<T = any> {
     httpMethod: string
-    body?: any
+    body?: T
     headers: KeyValueString
     queryStringParams: KeyValueString
 }
@@ -134,10 +134,10 @@ export interface MethodCall extends GetInstance {
     methodName: string
 }
 
-export interface InitResponse {
+export interface InitResponse<O = any> {
     state?: State
     config?: Configuration
-    response?: Response
+    response?: Response<O>
 }
 export interface GenerateCustomToken {
     userId: string
@@ -186,22 +186,22 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteLookUpKey?: OperationResponse[]
 }
 
-export interface StepResponse {
+export interface StepResponse<T = any> {
     state?: State
     methodState?: State
-    response?: Response
+    response?: Response<T>
     nextFlowId?: string
 }
 
-export interface Data extends StepResponse {
+export interface Data<I = any, O = any> extends StepResponse<O> {
     context: Context
     env: KeyValue
     config: Configuration
     version: number
     state: State
     methodState: State
-    request?: Request
-    response: Response
+    request?: Request<I>
+    response: Response<O>
     schedule: Schedule[]
     nextFlowId?: string
 }
