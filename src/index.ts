@@ -61,6 +61,11 @@ export interface Context {
     clientOs?: string
     targetServiceIds?: string[]
     relatedUserId?: string
+    pathParameters?: {
+        path: string
+        rule?: string
+        params?: KeyValueString
+    }
 }
 
 type UserState = { [userId: string]: { [key: string]: any } }
@@ -204,7 +209,7 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     version: number
     state: State<PUB, PRIV, USER, ROLE>
     methodState: State<PUB, PRIV, USER, ROLE>
-    request?: Request<I>
+    request: Request<I>
     response: Response<O>
     schedule: Schedule[]
     nextFlowId?: string
