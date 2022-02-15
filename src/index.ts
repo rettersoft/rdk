@@ -170,6 +170,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     addToSortedSet?: AddToSortedSet[]
     removeFromSortedSet?: GetFromSortedSet[]
     setFile?: SetFile[]
+    deleteFile?: GetFile[]
     setLookUpKey?: LookUpKey[]
     deleteLookUpKey?: LookUpKey[]
 }
@@ -190,6 +191,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     addToSortedSet?: OperationResponse[]
     removeFromSortedSet?: OperationResponse[]
     setFile?: OperationResponse[]
+    deleteFile?: OperationResponse[]
     setLookUpKey?: OperationResponse[]
     deleteLookUpKey?: OperationResponse[]
 }
@@ -286,6 +288,9 @@ export default class CloudObjectsOperator {
     async setFile(input: SetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.setFile.name)
     }
+    async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteFile.name)
+    }
 }
 
 class CloudObjectsPipeline {
@@ -360,6 +365,13 @@ class CloudObjectsPipeline {
         this.payload.setFile.push(input)
         return this
     }
+
+    deleteFile(input: GetFile): CloudObjectsPipeline {
+        if (!this.payload.deleteFile) this.payload.deleteFile = []
+        this.payload.deleteFile.push(input)
+        return this
+    }
+
     methodCall(input: MethodCall): CloudObjectsPipeline {
         if (!this.payload.methodCall) this.payload.methodCall = []
         this.payload.methodCall.push(input)
