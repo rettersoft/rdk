@@ -293,7 +293,7 @@ export default class CloudObjectsOperator {
     }
 }
 
-class CloudObjectsPipeline {
+export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
     generateCustomToken(input: GenerateCustomToken): CloudObjectsPipeline {
         if (!this.payload.generateCustomToken) this.payload.generateCustomToken = []
