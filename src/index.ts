@@ -1,3 +1,4 @@
+import axios from 'axios'
 export interface KeyValue {
     [key: string]: any
 }
@@ -115,6 +116,14 @@ export interface QuerySortedSet {
 export interface GetFile {
     filename: string
 }
+export type Architecture = 'arm64' | 'x86_64' | 'x86_64,arm64' | 'arm64,x86_64'
+export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs14.x,nodejs12.x'
+export interface UpsertDependency {
+    dependencyName: string
+    zipFile: Buffer
+    architectures?: Architecture
+    runtimes?: Runtime
+}
 
 export interface SetFile extends GetFile {
     body: string
@@ -162,6 +171,7 @@ export interface ReadOnlyOperationsInput {
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
+    
 }
 
 export interface OperationsInput extends ReadOnlyOperationsInput {
@@ -173,6 +183,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deleteFile?: GetFile[]
     setLookUpKey?: LookUpKey[]
     deleteLookUpKey?: LookUpKey[]
+    upsertDependency?: UpsertDependency[]
 }
 
 export interface ReadonlyOperationsOutput {
@@ -194,6 +205,8 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteFile?: OperationResponse[]
     setLookUpKey?: OperationResponse[]
     deleteLookUpKey?: OperationResponse[]
+    upsertDependency?: OperationResponse[]
+
 }
 
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
@@ -290,6 +303,17 @@ export default class CloudObjectsOperator {
     }
     async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteFile.name)
+    }
+    async upsertDependency(input: UpsertDependency): Promise<OperationResponse | undefined>{
+        return this.sendSingleOperation({ ...input, commit: false, zipFile: undefined }, this.upsertDependency.name).then((r: OperationResponse) => {
+            if (!r.success) return r
+            return axios.put(r.data.url, input.zipFile, {
+                headers: {
+                    'Content-Type': 'application/zip',
+                },
+            }).then(() => this.sendSingleOperation({ ...input, commit: true, zipFile: undefined }, this.upsertDependency.name).
+            catch((e) => ({success: false, error: e.message} as OperationResponse)))
+        })
     }
 }
 
