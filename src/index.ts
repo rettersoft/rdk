@@ -170,6 +170,7 @@ export interface ReadOnlyOperationsInput {
     getLookUpKey?: LookUpKey[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
+    getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
     
 }
@@ -194,6 +195,7 @@ export interface ReadonlyOperationsOutput {
     getLookUpKey?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: CloudObjectResponse[]
+    getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
 }
 
@@ -264,6 +266,9 @@ export default class CloudObjectsOperator {
     }
     async getInstance(input: GetInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.getInstance.name)
+    }
+    async getState(input: GetInstance): Promise<CloudObjectResponse | undefined> {
+        return this.sendSingleOperation(input, this.getState.name)
     }
     async getLookUpKey(input: LookUpKey): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getLookUpKey.name)
@@ -404,6 +409,11 @@ export class CloudObjectsPipeline {
     getInstance(input: GetInstance): CloudObjectsPipeline {
         if (!this.payload.getInstance) this.payload.getInstance = []
         this.payload.getInstance.push(input)
+        return this
+    }
+    getState(input: GetInstance): CloudObjectsPipeline {
+        if (!this.payload.getState) this.payload.getState = []
+        this.payload.getState.push(input)
         return this
     }
 
