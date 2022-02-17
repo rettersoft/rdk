@@ -310,12 +310,15 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.deleteFile.name)
     }
     async upsertDependency(input: UpsertDependency): Promise<OperationResponse | undefined>{
+        const limit = 50000000
         return this.sendSingleOperation({ ...input, commit: false, zipFile: undefined }, this.upsertDependency.name).then((r: OperationResponse) => {
             if (!r.success) return r
             return axios.put(r.data.url, input.zipFile, {
                 headers: {
                     'Content-Type': 'application/zip',
                 },
+                maxBodyLength: limit,
+                maxContentLength: limit
             }).then(() => this.sendSingleOperation({ ...input, commit: true, zipFile: undefined }, this.upsertDependency.name).
             catch((e) => ({success: false, error: e.message} as OperationResponse)))
         })
