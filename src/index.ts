@@ -86,22 +86,37 @@ export interface Schedule {
     method: string
     after: number
 }
-
-export interface GetGlobalMemory {
+export interface GetMemory {
     key: string
+    scopeClassId?: string
+}
+export interface DeleteMemory {
+    key: string
+    scope?: boolean
 }
 
-export interface SetGlobalMemory extends GetGlobalMemory {
+export interface SetMemory {
+    key: string
     value: any
     expireAt?: number
+    scope?: boolean
 }
 export interface GetFromSortedSet {
     setName: string
     sortKey: string
+    scopeClassId?: string
+}
+export interface RemoveFromSortedSet {
+    setName: string
+    sortKey: string
+    scope?: boolean
 }
 
-export interface AddToSortedSet extends GetFromSortedSet {
+export interface AddToSortedSet {
+    setName: string
+    sortKey: string
     data: Record<string, unknown>
+    scope?: boolean
 }
 export interface QuerySortedSet {
     setName: string
@@ -115,6 +130,10 @@ export interface QuerySortedSet {
 
 export interface GetFile {
     filename: string
+}
+export interface DeployClass {
+    classId: string
+    force?: boolean
 }
 export type Architecture = 'arm64' | 'x86_64' | 'x86_64,arm64' | 'arm64,x86_64'
 export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs14.x,nodejs12.x'
@@ -163,7 +182,7 @@ export interface GenerateCustomToken {
 }
 
 export interface ReadOnlyOperationsInput {
-    getGlobalMemory?: GetGlobalMemory[]
+    getMemory?: GetMemory[]
     getFromSortedSet?: GetFromSortedSet[]
     querySortedSet?: QuerySortedSet[]
     getFile?: GetFile[]
@@ -172,12 +191,11 @@ export interface ReadOnlyOperationsInput {
     getInstance?: GetInstance[]
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
-    
 }
 
 export interface OperationsInput extends ReadOnlyOperationsInput {
-    setGlobalMemory?: SetGlobalMemory[]
-    deleteGlobalMemory?: GetGlobalMemory[]
+    setMemory?: SetMemory[]
+    deleteMemory?: GetMemory[]
     addToSortedSet?: AddToSortedSet[]
     removeFromSortedSet?: GetFromSortedSet[]
     setFile?: SetFile[]
@@ -185,10 +203,11 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     setLookUpKey?: LookUpKey[]
     deleteLookUpKey?: LookUpKey[]
     upsertDependency?: UpsertDependency[]
+    deployClass?: DeployClass[]
 }
 
 export interface ReadonlyOperationsOutput {
-    getGlobalMemory?: OperationResponse[]
+    getMemory?: OperationResponse[]
     getFromSortedSet?: OperationResponse[]
     querySortedSet?: OperationResponse[]
     getFile?: OperationResponse[]
@@ -200,7 +219,8 @@ export interface ReadonlyOperationsOutput {
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
-    setGlobalMemory?: OperationResponse[]
+    setMemory?: OperationResponse[]
+    deleteMemory?: OperationResponse[]
     addToSortedSet?: OperationResponse[]
     removeFromSortedSet?: OperationResponse[]
     setFile?: OperationResponse[]
@@ -208,7 +228,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     setLookUpKey?: OperationResponse[]
     deleteLookUpKey?: OperationResponse[]
     upsertDependency?: OperationResponse[]
-
+    deployClass?: OperationResponse[]
 }
 
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
@@ -279,14 +299,14 @@ export default class CloudObjectsOperator {
     async deleteLookUpKey(input: LookUpKey): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteLookUpKey.name)
     }
-    async setGlobalMemory(input: SetGlobalMemory): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.setGlobalMemory.name)
+    async setMemory(input: SetMemory): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.setMemory.name)
     }
-    async getGlobalMemory(input: GetGlobalMemory): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.getGlobalMemory.name)
+    async getMemory(input: GetMemory): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.getMemory.name)
     }
-    async deleteGlobalMemory(input: GetGlobalMemory): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.deleteGlobalMemory.name)
+    async deleteMemory(input: DeleteMemory): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteMemory.name)
     }
     async addToSortedSet(input: AddToSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.addToSortedSet.name)
@@ -294,7 +314,7 @@ export default class CloudObjectsOperator {
     async getFromSortedSet(input: GetFromSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getFromSortedSet.name)
     }
-    async removeFromSortedSet(input: GetFromSortedSet): Promise<OperationResponse | undefined> {
+    async removeFromSortedSet(input: RemoveFromSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.removeFromSortedSet.name)
     }
     async querySortedSet(input: QuerySortedSet): Promise<OperationResponse | undefined> {
@@ -309,18 +329,26 @@ export default class CloudObjectsOperator {
     async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteFile.name)
     }
-    async upsertDependency(input: UpsertDependency): Promise<OperationResponse | undefined>{
+    async deployClass(input: DeployClass): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.deployClass.name)
+    }
+    async upsertDependency(input: UpsertDependency): Promise<OperationResponse | undefined> {
         const limit = 50000000
         return this.sendSingleOperation({ ...input, commit: false, zipFile: undefined }, this.upsertDependency.name).then((r: OperationResponse) => {
             if (!r.success) return r
-            return axios.put(r.data.url, input.zipFile, {
-                headers: {
-                    'Content-Type': 'application/zip',
-                },
-                maxBodyLength: limit,
-                maxContentLength: limit
-            }).then(() => this.sendSingleOperation({ ...input, commit: true, zipFile: undefined }, this.upsertDependency.name).
-            catch((e) => ({success: false, error: e.message} as OperationResponse)))
+            return axios
+                .put(r.data.url, input.zipFile, {
+                    headers: {
+                        'Content-Type': 'application/zip',
+                    },
+                    maxBodyLength: limit,
+                    maxContentLength: limit,
+                })
+                .then(() =>
+                    this.sendSingleOperation({ ...input, commit: true, zipFile: undefined }, this.upsertDependency.name).catch(
+                        (e) => ({ success: false, error: e.message } as OperationResponse),
+                    ),
+                )
         })
     }
 }
@@ -348,15 +376,19 @@ export class CloudObjectsPipeline {
         this.payload.deleteLookUpKey.push(input)
         return this
     }
-
-    getGlobalMemory(input: GetGlobalMemory): CloudObjectsPipeline {
-        if (!this.payload.getGlobalMemory) this.payload.getGlobalMemory = []
-        this.payload.getGlobalMemory.push(input)
+    setMemory(input: SetMemory): CloudObjectsPipeline {
+        if (!this.payload.setMemory) this.payload.setMemory = []
+        this.payload.setMemory.push(input)
         return this
     }
-    deleteGlobalMemory(input: GetGlobalMemory): CloudObjectsPipeline {
-        if (!this.payload.deleteGlobalMemory) this.payload.deleteGlobalMemory = []
-        this.payload.deleteGlobalMemory.push(input)
+    getMemory(input: GetMemory): CloudObjectsPipeline {
+        if (!this.payload.getMemory) this.payload.getMemory = []
+        this.payload.getMemory.push(input)
+        return this
+    }
+    deleteMemory(input: DeleteMemory): CloudObjectsPipeline {
+        if (!this.payload.deleteMemory) this.payload.deleteMemory = []
+        this.payload.deleteMemory.push(input)
         return this
     }
 
@@ -370,7 +402,7 @@ export class CloudObjectsPipeline {
         this.payload.getFromSortedSet.push(input)
         return this
     }
-    removeFromSortedSet(input: GetFromSortedSet): CloudObjectsPipeline {
+    removeFromSortedSet(input: RemoveFromSortedSet): CloudObjectsPipeline {
         if (!this.payload.removeFromSortedSet) this.payload.removeFromSortedSet = []
         this.payload.removeFromSortedSet.push(input)
         return this
@@ -378,11 +410,6 @@ export class CloudObjectsPipeline {
     querySortedSet(input: QuerySortedSet): CloudObjectsPipeline {
         if (!this.payload.querySortedSet) this.payload.querySortedSet = []
         this.payload.querySortedSet.push(input)
-        return this
-    }
-    setGlobalMemory(input: SetGlobalMemory): CloudObjectsPipeline {
-        if (!this.payload.setGlobalMemory) this.payload.setGlobalMemory = []
-        this.payload.setGlobalMemory.push(input)
         return this
     }
 
@@ -417,6 +444,11 @@ export class CloudObjectsPipeline {
     getState(input: GetInstance): CloudObjectsPipeline {
         if (!this.payload.getState) this.payload.getState = []
         this.payload.getState.push(input)
+        return this
+    }
+    deployClass(input: DeployClass): CloudObjectsPipeline {
+        if (!this.payload.deployClass) this.payload.deployClass = []
+        this.payload.deployClass.push(input)
         return this
     }
 
