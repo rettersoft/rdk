@@ -253,14 +253,21 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
 }
 
 import { Lambda } from 'aws-sdk'
-const lambda = new Lambda()
+import { CredentialsOptions } from 'aws-sdk/lib/credentials'
+let lambda: Lambda | undefined = undefined
+let token = ''
+let operationLambda = ''
+export function init(c: CredentialsOptions, t: string, o: string) {
+    lambda = new Lambda({ credentials: c })
+    token = t
+    operationLambda = o
+}
 
 async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
-    const { OPERATIONS_LAMBDA, CLOUD_OBJECTS_TOKEN } = process.env
-    return lambda
+    return lambda!
         .invoke({
-            FunctionName: OPERATIONS_LAMBDA!,
-            Payload: JSON.stringify({ data: payload, token: CLOUD_OBJECTS_TOKEN! }),
+            FunctionName: operationLambda,
+            Payload: JSON.stringify({ data: payload, token }),
         })
         .promise()
         .then(({ FunctionError: e, Payload: response }) => {
