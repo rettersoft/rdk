@@ -253,11 +253,10 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
 }
 
 import { Lambda } from 'aws-sdk'
-import { CredentialsOptions } from 'aws-sdk/lib/credentials'
 let lambda: Lambda | undefined = undefined
 let token = ''
 let operationLambda = ''
-export function init(c: CredentialsOptions, t: string, o: string) {
+export function init(c: any, t: string, o: string) {
     lambda = new Lambda({ credentials: c })
     token = t
     operationLambda = o
