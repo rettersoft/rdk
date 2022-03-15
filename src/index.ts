@@ -130,6 +130,7 @@ export interface QuerySortedSet {
 
 export interface GetFile {
     filename: string
+    scopeClassId?: string
 }
 export interface DeployClass {
     classId: string
@@ -144,8 +145,10 @@ export interface UpsertDependency {
     runtimes?: Runtime
 }
 
-export interface SetFile extends GetFile {
+export interface SetFile {
+    filename: string
     body: string
+    scope?: boolean
 }
 export interface LookUpKey {
     key: {
