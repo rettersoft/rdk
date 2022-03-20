@@ -101,6 +101,12 @@ export interface SetMemory {
     expireAt?: number
     scope?: boolean
 }
+export interface IncrementMemory {
+    key: string
+    scope?: boolean
+    path?: string
+    value: number
+}
 export interface GetFromSortedSet {
     setName: string
     sortKey: string
@@ -196,6 +202,7 @@ export interface ReadOnlyOperationsInput {
 export interface OperationsInput extends ReadOnlyOperationsInput {
     setMemory?: SetMemory[]
     deleteMemory?: GetMemory[]
+    incrementMemory?: IncrementMemory[]
     addToSortedSet?: AddToSortedSet[]
     removeFromSortedSet?: GetFromSortedSet[]
     setFile?: SetFile[]
@@ -221,6 +228,7 @@ export interface ReadonlyOperationsOutput {
 export interface OperationsOutput extends ReadonlyOperationsOutput {
     setMemory?: OperationResponse[]
     deleteMemory?: OperationResponse[]
+    incrementMemory?: OperationResponse[]
     addToSortedSet?: OperationResponse[]
     removeFromSortedSet?: OperationResponse[]
     setFile?: OperationResponse[]
@@ -314,6 +322,9 @@ export default class CloudObjectsOperator {
     async deleteMemory(input: DeleteMemory): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteMemory.name)
     }
+    async incrementMemory(input: IncrementMemory): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.incrementMemory.name)
+    }
     async addToSortedSet(input: AddToSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.addToSortedSet.name)
     }
@@ -395,6 +406,11 @@ export class CloudObjectsPipeline {
     deleteMemory(input: DeleteMemory): CloudObjectsPipeline {
         if (!this.payload.deleteMemory) this.payload.deleteMemory = []
         this.payload.deleteMemory.push(input)
+        return this
+    }
+    incrementMemory(input: IncrementMemory): CloudObjectsPipeline {
+        if (!this.payload.incrementMemory) this.payload.incrementMemory = []
+        this.payload.incrementMemory.push(input)
         return this
     }
 
