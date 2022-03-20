@@ -88,41 +88,34 @@ export interface Schedule {
 }
 export interface GetMemory {
     key: string
-    scopeClassId?: string
 }
 export interface DeleteMemory {
     key: string
-    scope?: boolean
 }
 
 export interface SetMemory {
     key: string
     value: any
     expireAt?: number
-    scope?: boolean
 }
 export interface IncrementMemory {
     key: string
-    scope?: boolean
     path?: string
     value: number
 }
 export interface GetFromSortedSet {
     setName: string
     sortKey: string
-    scopeClassId?: string
 }
 export interface RemoveFromSortedSet {
     setName: string
     sortKey: string
-    scope?: boolean
 }
 
 export interface AddToSortedSet {
     setName: string
     sortKey: string
     data: Record<string, unknown>
-    scope?: boolean
 }
 export interface QuerySortedSet {
     setName: string
