@@ -264,24 +264,52 @@ import { Lambda } from 'aws-sdk'
 let lambda: Lambda | undefined = undefined
 let token = ''
 let operationLambda = ''
-export function init(c: any, t: string, o: string) {
+
+let operationCountMilestone = 0;
+let concurrentLambdaCountLimit = 0;
+
+let usageCheckCounter = 0;
+let operationCount = 0
+let concurrentLambdaCount = 0;
+export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: number) {
     lambda = new Lambda({ credentials: c })
     token = t
     operationLambda = o
+    operationCountMilestone = ocLimit || 100
+    concurrentLambdaCountLimit = clcLimit || 10
 }
 
 async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
+
+    if (concurrentLambdaCount > concurrentLambdaCountLimit) {
+        throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
+    }
+    operationCount = Object.values(payload).reduce((total, op) => total + op.length, operationCount)
+
+    const newUsageCheck = Math.floor(operationCount / operationCountMilestone)
+    let checkUsage = false
+    if (newUsageCheck > 0 && newUsageCheck !== usageCheckCounter) {
+        usageCheckCounter = newUsageCheck
+        checkUsage = true
+    }
+
+    concurrentLambdaCount++
     return lambda!
         .invoke({
             FunctionName: operationLambda,
-            Payload: JSON.stringify({ data: payload, token }),
+            Payload: JSON.stringify({ data: payload, token, checkUsage }),
         })
         .promise()
         .then(({ FunctionError: e, Payload: response }) => {
+            concurrentLambdaCount--
             if (e) throw new Error(e)
-
-            return JSON.parse(response as string) as OperationsOutput
+            const r = JSON.parse(response as string)
+            if (r.limitError)
+                throw new Error(r.limitError)
+            delete r.limitError
+            return r as OperationsOutput
         })
+
 }
 
 export default class CloudObjectsOperator {
