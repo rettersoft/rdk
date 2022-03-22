@@ -16,8 +16,13 @@ export interface OperationResponse {
     error?: string
 }
 export interface GenerateCustomTokenResponse extends OperationResponse {
-    data: {
+    data?: {
         customToken: string
+    }
+}
+export interface InvalidateCacheResponse extends OperationResponse {
+    data?: {
+        id: string
     }
 }
 export interface CloudObjectResponse<T = any> {
@@ -134,6 +139,11 @@ export interface DeployClass {
     classId: string
     force?: boolean
 }
+export interface InvalidateCache {
+    classId?: string
+    methodName?: string
+    instanceId?: string
+}
 export type Architecture = 'arm64' | 'x86_64' | 'x86_64,arm64' | 'arm64,x86_64'
 export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs14.x,nodejs12.x'
 export interface UpsertDependency {
@@ -174,6 +184,7 @@ export interface InitResponse<O = any> {
     config?: Configuration
     response?: Response<O>
 }
+
 export interface GenerateCustomToken {
     userId: string
     identity: string
@@ -204,6 +215,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deleteLookUpKey?: LookUpKey[]
     upsertDependency?: UpsertDependency[]
     deployClass?: DeployClass[]
+    invalidateCache?: InvalidateCache[]
 }
 
 export interface ReadonlyOperationsOutput {
@@ -230,6 +242,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteLookUpKey?: OperationResponse[]
     upsertDependency?: OperationResponse[]
     deployClass?: OperationResponse[]
+    invalidateCache?: InvalidateCacheResponse[]
 }
 
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
@@ -389,6 +402,9 @@ export default class CloudObjectsOperator {
                 )
         })
     }
+    async invalidateCache(input: InvalidateCache): Promise<InvalidateCacheResponse | undefined> {
+        return this.sendSingleOperation(input, this.invalidateCache.name)
+    }
 }
 
 export class CloudObjectsPipeline {
@@ -492,6 +508,11 @@ export class CloudObjectsPipeline {
     deployClass(input: DeployClass): CloudObjectsPipeline {
         if (!this.payload.deployClass) this.payload.deployClass = []
         this.payload.deployClass.push(input)
+        return this
+    }
+    invalidateCache(input: InvalidateCache): CloudObjectsPipeline {
+        if (!this.payload.invalidateCache) this.payload.invalidateCache = []
+        this.payload.invalidateCache.push(input)
         return this
     }
 
