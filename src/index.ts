@@ -15,6 +15,10 @@ export interface OperationResponse {
     data?: any
     error?: string
 }
+export interface OperationExtraResponse extends OperationResponse {
+    extraData?: any
+}
+
 export interface GenerateCustomTokenResponse extends OperationResponse {
     data?: {
         customToken: string
@@ -156,6 +160,11 @@ export interface UpsertDependency {
 export interface SetFile extends GetFile {
     body: string
 }
+export interface SetFileOperation extends GetFile {
+    body?: string
+    size: number
+    large: boolean
+}
 export interface LookUpKey {
     key: {
         name: string
@@ -209,7 +218,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     incrementMemory?: IncrementMemory[]
     addToSortedSet?: AddToSortedSet[]
     removeFromSortedSet?: GetFromSortedSet[]
-    setFile?: SetFile[]
+    setFile?: (SetFile | SetFileOperation)[]
     deleteFile?: GetFile[]
     setLookUpKey?: LookUpKey[]
     deleteLookUpKey?: LookUpKey[]
@@ -271,6 +280,9 @@ let lambda: Lambda | undefined = undefined
 let token = ''
 let operationLambda = ''
 
+const fileSizeLimit = 250000000
+
+
 let operationCountMilestone = 0;
 let concurrentLambdaCountLimit = 0;
 
@@ -285,6 +297,9 @@ export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: 
     concurrentLambdaCountLimit = clcLimit || 10
 }
 
+function calculateSize(data: string) {
+    return new TextEncoder().encode(data).length
+}
 async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
 
     if (concurrentLambdaCount > concurrentLambdaCountLimit) {
@@ -372,10 +387,50 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.querySortedSet.name)
     }
     async getFile(input: GetFile): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.getFile.name)
+        return this.sendSingleOperation(input, this.getFile.name).then((g) => {
+            if (g.success && g.extraData?.url) {
+                return axios.get(g.extraData.url)
+                    .then((r) => ({
+                        ...g,
+                        extraData: undefined,
+                        data: r.data
+                    }))
+                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+            }
+            return g
+        })
     }
+
     async setFile(input: SetFile): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.setFile.name)
+        const size = calculateSize(input.body)
+
+        const setFileOperation: SetFileOperation = {
+            ...input,
+            size,
+            large: size > 5242880 //5mb
+        }
+
+        if (setFileOperation.large) {
+            delete setFileOperation.body
+        }
+        let promise = this.sendSingleOperation(setFileOperation, this.setFile.name)
+        if (setFileOperation.large) {
+            promise = promise.then((r: OperationResponse) => {
+                console.log("setFileReturn: ", JSON.stringify(r))
+                if (!r.success) return r
+                return axios
+                    .put(r.data.url, input.body, {
+                        headers: {
+                            'Content-Length': size.toString(),
+                        },
+                        maxBodyLength: fileSizeLimit,
+                        maxContentLength: fileSizeLimit,
+                    })
+                    .then(() => ({ success: true } as OperationResponse))
+                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+            })
+        }
+        return promise
     }
     async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteFile.name)
@@ -384,7 +439,6 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.deployClass.name)
     }
     async upsertDependency(input: UpsertDependency): Promise<OperationResponse | undefined> {
-        const limit = 50000000
         return this.sendSingleOperation({ ...input, commit: false, zipFile: undefined }, this.upsertDependency.name).then((r: OperationResponse) => {
             if (!r.success) return r
             return axios
@@ -392,8 +446,8 @@ export default class CloudObjectsOperator {
                     headers: {
                         'Content-Type': 'application/zip',
                     },
-                    maxBodyLength: limit,
-                    maxContentLength: limit,
+                    maxBodyLength: fileSizeLimit,
+                    maxContentLength: fileSizeLimit,
                 })
                 .then(() =>
                     this.sendSingleOperation({ ...input, commit: true, zipFile: undefined }, this.upsertDependency.name).catch(
@@ -517,8 +571,58 @@ export class CloudObjectsPipeline {
     }
 
     async send(): Promise<OperationsOutput> {
-        return invokeLambda(this.payload).then((r) => {
+        const setFileOperations: SetFileOperation[] | undefined = this.payload.setFile?.map((s) => ({
+            ...s,
+            size: calculateSize(s.body!),
+            large: false
+        }))
+        const totalSize = setFileOperations?.reduce((sum, o) => sum + o.size, 0)
+        const large = totalSize && totalSize > 5242880
+        if (large) {
+            setFileOperations?.forEach((s) => {
+                s.large = true;
+                s.body = undefined;
+            })
+        }
+
+        if (setFileOperations) {
+            this.payload.setFile = setFileOperations
+        }
+
+        let promise = invokeLambda(this.payload)
+        if (large) {
+            promise = promise.then((r) => Promise.all(r.setFile!.map((r: OperationResponse, i) => {
+                console.log("setFilePipelineReturn: ", JSON.stringify(r))
+                if (!r.success) return r
+                const { body } = this.payload.setFile![i]
+                return axios
+                    .put(r.data.url, body, {
+                        maxBodyLength: fileSizeLimit,
+                        maxContentLength: fileSizeLimit,
+                    })
+                    .then(() => ({ success: true } as OperationResponse))
+                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+            })).then((setFile) => ({ ...r, setFile })))
+        }
+        return promise.then((r) => {
             this.payload = {}
+            if (r.getFile) {
+                return Promise.all((r.getFile as OperationExtraResponse[]).map((g) => {
+                    if (g.success && g.extraData?.url) {
+                        return axios.get(g.extraData.url).then((r) => ({
+                            ...g,
+                            extraData: undefined,
+                            data: r.data
+                        }))
+                            .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+                    }
+                    return g
+
+                })).then((getFile) => {
+                    r.getFile = getFile
+                    return r
+                })
+            }
             return r
         })
     }
