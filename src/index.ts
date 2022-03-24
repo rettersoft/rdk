@@ -256,7 +256,6 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
 
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
     state?: State<PUB, PRIV, USER, ROLE>
-    methodState?: State<PUB, PRIV, USER, ROLE>
     response?: Response<T>
     nextFlowId?: string
 }
@@ -268,7 +267,6 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     config: Configuration
     version: number
     state: State<PUB, PRIV, USER, ROLE>
-    methodState: State<PUB, PRIV, USER, ROLE>
     request: Request<I>
     response: Response<O>
     schedule: Schedule[]
