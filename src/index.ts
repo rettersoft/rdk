@@ -172,6 +172,12 @@ export interface LookUpKey {
     }
 }
 
+/**
+ * lookupKey or instanceId must be given
+ *
+ * @export
+ * @interface GetInstance
+ */
 export interface GetInstance {
     httpMethod?: string
     queryStringParams?: KeyValueString
@@ -184,6 +190,8 @@ export interface GetInstance {
         value: string
     }
 }
+
+
 export interface MethodCall extends GetInstance {
     methodName: string
 }
@@ -193,6 +201,7 @@ export interface InitResponse<O = any> {
     config?: Configuration
     response?: Response<O>
 }
+
 
 export interface GenerateCustomToken {
     userId: string
@@ -332,6 +341,12 @@ async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput>
 }
 
 export default class CloudObjectsOperator {
+
+    /**
+     *
+     * Creates a pipeline which gathers operations until the send method is called, and then sends a batch request for all of them.
+     * @memberof CloudObjectsOperator
+     */
     pipeline(): CloudObjectsPipeline {
         return new CloudObjectsPipeline()
     }
@@ -339,51 +354,180 @@ export default class CloudObjectsOperator {
     private async sendSingleOperation(input: any, operationType: string) {
         return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
     }
+
+
+    /**
+     *
+     * Generates custom user token which can be used to authenticate via Retter SDKs
+     * @param {GenerateCustomToken} input
+     * @return {*}  {(Promise<GenerateCustomTokenResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async generateCustomToken(input: GenerateCustomToken): Promise<GenerateCustomTokenResponse | undefined> {
         return this.sendSingleOperation(input, this.generateCustomToken.name)
     }
+
+    /**
+     *
+     * Makes a method call to an instance
+     * @param {MethodCall} input
+     * @return {*}  {(Promise<CloudObjectResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async methodCall(input: MethodCall): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.methodCall.name)
     }
+
+    /**
+     *
+     * Gets an instance
+     * @param {GetInstance} input
+     * @return {*}  {(Promise<CloudObjectResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async getInstance(input: GetInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.getInstance.name)
     }
+
+    /**
+     *
+     * Gets the state of an instance
+     * @param {GetInstance} input
+     * @return {*}  {(Promise<CloudObjectResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async getState(input: GetInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.getState.name)
     }
+
+    /**
+     *
+     * Gets the instance id coressponds to the given lookup key
+     * @param {LookUpKey} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async getLookUpKey(input: LookUpKey): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getLookUpKey.name)
     }
+
+    /**
+     *
+     * Sets the current instance id to the given lookup key
+     * @param {LookUpKey} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async setLookUpKey(input: LookUpKey): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.setLookUpKey.name)
     }
+
+    /**
+     *
+     * Deletes the given lookup key
+     * @param {LookUpKey} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async deleteLookUpKey(input: LookUpKey): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteLookUpKey.name)
     }
+
+    /**
+     *
+     * Sets the value to the given key in memory
+     * @param {SetMemory} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async setMemory(input: SetMemory): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.setMemory.name)
     }
+
+    /**
+     *
+     * Gets the value of the given key from memory
+     * @param {GetMemory} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async getMemory(input: GetMemory): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getMemory.name)
     }
+
+    /**
+     *
+     * Deletes the given key from memory
+     * @param {DeleteMemory} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async deleteMemory(input: DeleteMemory): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteMemory.name)
     }
+
+    /**
+     *
+     * Increments the value of the given key in memory
+     * 
+     * The value have to be a number
+     * Input parameter path can be used to increment a nested key.
+     * @param {IncrementMemory} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async incrementMemory(input: IncrementMemory): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.incrementMemory.name)
     }
+    /**
+     *
+     * Adds a value to the given sorted set with the given sort key
+     * @param {AddToSortedSet} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async addToSortedSet(input: AddToSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.addToSortedSet.name)
     }
+    /**
+     *
+     * Gets the value of a sort key from the given sorted set
+     * @param {AddToSortedSet} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async getFromSortedSet(input: GetFromSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getFromSortedSet.name)
     }
+
+    /**
+     *
+     * Removes the given sort key from the given sorted set
+     * @param {RemoveFromSortedSet} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async removeFromSortedSet(input: RemoveFromSortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.removeFromSortedSet.name)
     }
+    /**
+     *
+     * Queries the given sorted set
+     * @param {QuerySortedSet} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async querySortedSet(input: QuerySortedSet): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.querySortedSet.name)
     }
+
+    /**
+     *
+     * Gets file
+     * @param {GetFile} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async getFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getFile.name).then((g) => {
             if (g.success && g.extraData?.url) {
@@ -399,6 +543,14 @@ export default class CloudObjectsOperator {
         })
     }
 
+
+    /**
+     *
+     * Sets file
+     * @param {SetFile} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async setFile(input: SetFile): Promise<OperationResponse | undefined> {
         const size = calculateSize(input.body)
 
@@ -430,12 +582,36 @@ export default class CloudObjectsOperator {
         }
         return promise
     }
+
+    /**
+     *
+     * Deletes file
+     * @param {GetFile} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteFile.name)
     }
+
+    /**
+     *
+     * Deploys an existing class
+     * @param {DeployClass} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async deployClass(input: DeployClass): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deployClass.name)
     }
+
+    /**
+     *
+     * Upserts a dependency
+     * @param {UpsertDependency} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async upsertDependency(input: UpsertDependency): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation({ ...input, commit: false, zipFile: undefined }, this.upsertDependency.name).then((r: OperationResponse) => {
             if (!r.success) return r
@@ -454,120 +630,293 @@ export default class CloudObjectsOperator {
                 )
         })
     }
+
+    /**
+     *
+     * Invalidates cache for given path
+     * @param {InvalidateCache} input
+     * @return {*}  {(Promise<InvalidateCacheResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
     async invalidateCache(input: InvalidateCache): Promise<InvalidateCacheResponse | undefined> {
         return this.sendSingleOperation(input, this.invalidateCache.name)
     }
 }
 
+
 export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
+
+    /**
+     *
+     * Generates custom user token which can be used to authenticate via Retter SDKs
+     * 
+     * @param {GenerateCustomToken} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     generateCustomToken(input: GenerateCustomToken): CloudObjectsPipeline {
         if (!this.payload.generateCustomToken) this.payload.generateCustomToken = []
         this.payload.generateCustomToken.push(input)
         return this
     }
+
+    /**
+     *
+     * Gets the instance id coressponds to the given lookup key
+     * @param {LookUpKey} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     getLookUpKey(input: LookUpKey): CloudObjectsPipeline {
         if (!this.payload.getLookUpKey) this.payload.getLookUpKey = []
         this.payload.getLookUpKey.push(input)
         return this
     }
 
+    /**
+     *
+     * Sets the current instance id to the given lookup key
+     * @param {LookUpKey} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     setLookUpKey(input: LookUpKey): CloudObjectsPipeline {
         if (!this.payload.setLookUpKey) this.payload.setLookUpKey = []
         this.payload.setLookUpKey.push(input)
         return this
     }
+
+    /**
+     *
+     * Deletes the given lookup key
+     * @param {LookUpKey} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     deleteLookUpKey(input: LookUpKey): CloudObjectsPipeline {
         if (!this.payload.deleteLookUpKey) this.payload.deleteLookUpKey = []
         this.payload.deleteLookUpKey.push(input)
         return this
     }
+
+    /**
+     *
+     * Sets the value to the given key in memory
+     * @param {SetMemory} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     setMemory(input: SetMemory): CloudObjectsPipeline {
         if (!this.payload.setMemory) this.payload.setMemory = []
         this.payload.setMemory.push(input)
         return this
     }
+
+    /**
+     *
+     * Gets the value of the given key from memory
+     * @param {GetMemory} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     getMemory(input: GetMemory): CloudObjectsPipeline {
         if (!this.payload.getMemory) this.payload.getMemory = []
         this.payload.getMemory.push(input)
         return this
     }
+
+    /**
+     *
+     * Deletes the given key from memory
+     * @param {DeleteMemory} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     deleteMemory(input: DeleteMemory): CloudObjectsPipeline {
         if (!this.payload.deleteMemory) this.payload.deleteMemory = []
         this.payload.deleteMemory.push(input)
         return this
     }
+
+    /**
+     *
+     * Increments the value of the given key in memory
+     * 
+     * The value have to be a number
+     * Input parameter path can be used to increment a nested key.
+     * @param {IncrementMemory} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     incrementMemory(input: IncrementMemory): CloudObjectsPipeline {
         if (!this.payload.incrementMemory) this.payload.incrementMemory = []
         this.payload.incrementMemory.push(input)
         return this
     }
 
+    /**
+     *
+     * Adds a value to the given sorted set with the given sort key
+     * @param {AddToSortedSet} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
         if (!this.payload.addToSortedSet) this.payload.addToSortedSet = []
         this.payload.addToSortedSet.push(input)
         return this
     }
+
+    /**
+     *
+     * Gets the value of a sort key from the given sorted set
+     * @param {AddToSortedSet} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     getFromSortedSet(input: GetFromSortedSet): CloudObjectsPipeline {
         if (!this.payload.getFromSortedSet) this.payload.getFromSortedSet = []
         this.payload.getFromSortedSet.push(input)
         return this
     }
+
+    /**
+     *
+     * Removes the given sort key from the given sorted set
+     * @param {RemoveFromSortedSet} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     removeFromSortedSet(input: RemoveFromSortedSet): CloudObjectsPipeline {
         if (!this.payload.removeFromSortedSet) this.payload.removeFromSortedSet = []
         this.payload.removeFromSortedSet.push(input)
         return this
     }
+    /**
+     *
+     * Queries the given sorted set
+     * @param {QuerySortedSet} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     querySortedSet(input: QuerySortedSet): CloudObjectsPipeline {
         if (!this.payload.querySortedSet) this.payload.querySortedSet = []
         this.payload.querySortedSet.push(input)
         return this
     }
 
+    /**
+     *
+     * Gets file
+     * @param {GetFile} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     getFile(input: GetFile): CloudObjectsPipeline {
         if (!this.payload.getFile) this.payload.getFile = []
         this.payload.getFile.push(input)
         return this
     }
 
+    /**
+     *
+     * Sets file
+     * @param {SetFile} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     setFile(input: SetFile): CloudObjectsPipeline {
         if (!this.payload.setFile) this.payload.setFile = []
         this.payload.setFile.push(input)
         return this
     }
 
+    /**
+     *
+     * Deletes file
+     * @param {GetFile} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     deleteFile(input: GetFile): CloudObjectsPipeline {
         if (!this.payload.deleteFile) this.payload.deleteFile = []
         this.payload.deleteFile.push(input)
         return this
     }
 
+    /**
+     *
+     * Makes a method call to an instance
+     * @param {MethodCall} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     methodCall(input: MethodCall): CloudObjectsPipeline {
         if (!this.payload.methodCall) this.payload.methodCall = []
         this.payload.methodCall.push(input)
         return this
     }
+
+    /**
+     *
+     * Gets an instance
+     * @param {GetInstance} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     getInstance(input: GetInstance): CloudObjectsPipeline {
         if (!this.payload.getInstance) this.payload.getInstance = []
         this.payload.getInstance.push(input)
         return this
     }
+
+    /**
+     *
+     * Gets the state of an instance
+     * @param {GetInstance} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     getState(input: GetInstance): CloudObjectsPipeline {
         if (!this.payload.getState) this.payload.getState = []
         this.payload.getState.push(input)
         return this
     }
+
+    /**
+     *
+     * Deploys an existing class
+     * @param {DeployClass} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     deployClass(input: DeployClass): CloudObjectsPipeline {
         if (!this.payload.deployClass) this.payload.deployClass = []
         this.payload.deployClass.push(input)
         return this
     }
+
+    /**
+     *
+     * Invalidates cache for given path
+     * @param {InvalidateCache} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
     invalidateCache(input: InvalidateCache): CloudObjectsPipeline {
         if (!this.payload.invalidateCache) this.payload.invalidateCache = []
         this.payload.invalidateCache.push(input)
         return this
     }
 
+
+    /**
+     *
+     * Sends a batch request for operations gathered in the pipeline
+     * @return {*}  {Promise<OperationsOutput>}
+     * @memberof CloudObjectsPipeline
+     */
     async send(): Promise<OperationsOutput> {
         const setFileOperations: SetFileOperation[] | undefined = this.payload.setFile?.map((s) => ({
             ...s,
