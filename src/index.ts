@@ -380,7 +380,7 @@ export default class CloudObjectsOperator {
 
     /**
      *
-     * Gets an instance
+     * Creates a new instance or returns an existing one
      * @param {GetInstance} input
      * @return {*}  {(Promise<CloudObjectResponse | undefined>)}
      * @memberof CloudObjectsOperator
@@ -546,7 +546,7 @@ export default class CloudObjectsOperator {
 
     /**
      *
-     * Sets file
+     * Uploads file
      * @param {SetFile} input
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof CloudObjectsOperator
@@ -821,7 +821,7 @@ export class CloudObjectsPipeline {
 
     /**
      *
-     * Sets file
+     * Uploads file
      * @param {SetFile} input
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
@@ -860,7 +860,7 @@ export class CloudObjectsPipeline {
 
     /**
      *
-     * Gets an instance
+     * Creates a new instance or returns an existing one
      * @param {GetInstance} input
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
