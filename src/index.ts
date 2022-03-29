@@ -82,10 +82,10 @@ type UserState = { [userId: string]: { [key: string]: any } }
 type RoleState = { [identity: string]: { [key: string]: any } }
 
 export interface State<PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
-    public?: PUB
-    private?: PRIV
-    user?: USER
-    role?: ROLE
+    public: PUB
+    private: PRIV
+    user: USER
+    role: ROLE
 }
 
 export interface Schedule {
