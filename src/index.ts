@@ -29,19 +29,19 @@ export interface InvalidateCacheResponse extends OperationResponse {
         id: string
     }
 }
-export interface CloudObjectResponse<T = any | undefined> {
+export interface CloudObjectResponse<T = any> {
     statusCode: number
-    body: T
+    body?: T
     headers?: KeyValueString
 }
 
-export interface Response<T = any | undefined> extends CloudObjectResponse<T> {
+export interface Response<T> extends CloudObjectResponse<T> {
     isBase64Encoded?: boolean
 }
 
-export interface Request<T = any | undefined> {
+export interface Request<T = any> {
     httpMethod: string
-    body: T
+    body?: T
     headers: KeyValueString
     queryStringParams: KeyValueString
 }
@@ -81,11 +81,11 @@ export interface Context {
 type UserState = { [userId: string]: { [key: string]: any } }
 type RoleState = { [identity: string]: { [key: string]: any } }
 
-export interface State<PUB = KeyValue | undefined, PRIV = KeyValue | undefined, USER = UserState | undefined, ROLE = RoleState | undefined> {
-    public: PUB
-    private: PRIV
-    user: USER
-    role: ROLE
+export interface State<PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
+    public?: PUB
+    private?: PRIV
+    user?: USER
+    role?: ROLE
 }
 
 export interface Schedule {
