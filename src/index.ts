@@ -180,7 +180,7 @@ export interface LookUpKey {
  */
 export interface GetInstance {
     httpMethod?: string
-    queryStringParams?: KeyValueString
+    queryStringParams?: any
     headers?: KeyValueString
     body?: any
     classId: string
