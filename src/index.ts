@@ -43,7 +43,7 @@ export interface Request<T = any> {
     httpMethod: string
     body?: T
     headers: KeyValueString
-    queryStringParams: KeyValueString
+    queryStringParams: Record<string, any>
 }
 
 export interface Context {
@@ -180,7 +180,7 @@ export interface LookUpKey {
  */
 export interface GetInstance {
     httpMethod?: string
-    queryStringParams?: any
+    queryStringParams?: Record<string, any>
     headers?: KeyValueString
     body?: any
     classId: string
