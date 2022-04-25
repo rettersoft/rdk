@@ -191,6 +191,15 @@ export interface GetInstance {
     }
 }
 
+export interface ListFiles {
+    prefix?: string
+    nextToken?: string
+}
+
+export interface ListInstanceIds {
+    classId?: string
+    nextToken?: string
+}
 
 export interface MethodCall extends GetInstance {
     methodName: string
@@ -217,6 +226,8 @@ export interface ReadOnlyOperationsInput {
     getLookUpKey?: LookUpKey[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
+    listInstanceIds?: ListInstanceIds[]
+    listFiles?: ListFiles[]
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
 }
@@ -244,6 +255,8 @@ export interface ReadonlyOperationsOutput {
     getLookUpKey?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: CloudObjectResponse[]
+    listInstanceIds?: CloudObjectResponse[]
+    listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
 }
@@ -387,6 +400,14 @@ export default class CloudObjectsOperator {
      */
     async getInstance(input: GetInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.getInstance.name)
+    }
+
+    async listInstanceIds(input: ListInstanceIds): Promise<CloudObjectResponse | undefined> {
+        return this.sendSingleOperation(input, this.listInstanceIds.name)
+    }
+
+    async listFiles(input: ListFiles): Promise<CloudObjectResponse | undefined> {
+        return this.sendSingleOperation(input, this.listFiles.name)
     }
 
     /**
