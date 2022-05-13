@@ -95,6 +95,13 @@ export interface Schedule {
     method: string
     after: number
 }
+export interface Task {
+    classId?: string
+    instanceId?: string
+    payload?: any
+    method: string
+    after: number
+}
 export interface GetMemory {
     key: string
 }
@@ -201,8 +208,15 @@ export interface ListInstanceIds {
     nextToken?: string
 }
 
+export interface RetryConfig {
+    delay: number
+    count: number
+    rate: number
+}
+
 export interface MethodCall extends GetInstance {
     methodName: string
+    retryConfig?: RetryConfig,
 }
 
 export interface InitResponse<O = any> {
@@ -292,6 +306,7 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     request: Request<I>
     response: Response<O>
     schedule: Schedule[]
+    tasks: Task[]
     nextFlowId?: string
 }
 
