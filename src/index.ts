@@ -246,6 +246,33 @@ export interface ReadOnlyOperationsInput {
     generateCustomToken?: GenerateCustomToken[]
 }
 
+// * <database>
+export interface ReadDatabase {
+    partKey: string
+    sortKey: string
+    memory?: boolean
+}
+export interface WriteToDatabase {
+    partKey: string
+    sortKey: string
+    memory?: boolean
+    data: Record<string, unknown>
+}
+export interface RemoveFromDatabase {
+    partKey: string
+    sortKey: string
+}
+export interface QueryDatabase {
+    partKey: string
+    beginsWith?: string
+    greaterOrEqual?: string
+    lessOrEqual?: string
+    reverse?: boolean
+    nextToken?: string
+    limit?: number
+}
+// * </database>
+
 export interface OperationsInput extends ReadOnlyOperationsInput {
     setMemory?: SetMemory[]
     deleteMemory?: GetMemory[]
@@ -677,6 +704,21 @@ export default class CloudObjectsOperator {
     async invalidateCache(input: InvalidateCache): Promise<InvalidateCacheResponse | undefined> {
         return this.sendSingleOperation(input, this.invalidateCache.name)
     }
+
+    // * <database>
+    async writeToDatabase(input: WriteToDatabase): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.writeToDatabase.name)
+    }
+    async readDatabase(input: ReadDatabase): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.readDatabase.name)
+    }
+    async removeFromDatabase(input: RemoveFromDatabase): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.removeFromDatabase.name)
+    }
+    async queryDatabase(input: QueryDatabase): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.queryDatabase.name)
+    }
+    // * </database>
 }
 
 
