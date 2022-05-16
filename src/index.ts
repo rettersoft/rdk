@@ -236,6 +236,8 @@ export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
     getFromSortedSet?: GetFromSortedSet[]
     querySortedSet?: QuerySortedSet[]
+    readDatabase?: ReadDatabase[]
+    queryDatabase?: QueryDatabase[]
     getFile?: GetFile[]
     getLookUpKey?: LookUpKey[]
     methodCall?: MethodCall[]
@@ -279,6 +281,8 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     incrementMemory?: IncrementMemory[]
     addToSortedSet?: AddToSortedSet[]
     removeFromSortedSet?: GetFromSortedSet[]
+    writeToDatabase?: WriteToDatabase[]
+    removeFromDatabase?: RemoveFromDatabase[]
     setFile?: (SetFile | SetFileOperation)[]
     deleteFile?: GetFile[]
     setLookUpKey?: LookUpKey[]
@@ -292,6 +296,8 @@ export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
     getFromSortedSet?: OperationResponse[]
     querySortedSet?: OperationResponse[]
+    readDatabase?: OperationResponse[]
+    queryDatabase?: OperationResponse[]
     getFile?: OperationResponse[]
     getLookUpKey?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
@@ -308,6 +314,8 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     incrementMemory?: OperationResponse[]
     addToSortedSet?: OperationResponse[]
     removeFromSortedSet?: OperationResponse[]
+    writeToDatabase?: OperationResponse[]
+    removeFromDatabase?: OperationResponse[]
     setFile?: OperationResponse[]
     deleteFile?: OperationResponse[]
     setLookUpKey?: OperationResponse[]
@@ -840,7 +848,7 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
-    addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
+     addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
         if (!this.payload.addToSortedSet) this.payload.addToSortedSet = []
         this.payload.addToSortedSet.push(input)
         return this
@@ -881,6 +889,30 @@ export class CloudObjectsPipeline {
     querySortedSet(input: QuerySortedSet): CloudObjectsPipeline {
         if (!this.payload.querySortedSet) this.payload.querySortedSet = []
         this.payload.querySortedSet.push(input)
+        return this
+    }
+
+    writeToDatabase(input: WriteToDatabase): CloudObjectsPipeline {
+        if (!this.payload.writeToDatabase) this.payload.writeToDatabase = []
+        this.payload.writeToDatabase.push(input)
+        return this
+    }
+
+    readDatabase(input: ReadDatabase): CloudObjectsPipeline {
+        if (!this.payload.readDatabase) this.payload.readDatabase = []
+        this.payload.readDatabase.push(input)
+        return this
+    }
+
+    removeFromDatabase(input: RemoveFromDatabase): CloudObjectsPipeline {
+        if (!this.payload.removeFromDatabase) this.payload.removeFromDatabase = []
+        this.payload.removeFromDatabase.push(input)
+        return this
+    }
+
+    queryDatabase(input: QueryDatabase): CloudObjectsPipeline {
+        if (!this.payload.queryDatabase) this.payload.queryDatabase = []
+        this.payload.queryDatabase.push(input)
         return this
     }
 
