@@ -216,7 +216,7 @@ export interface RetryConfig {
 
 export interface MethodCall extends GetInstance {
     methodName: string
-    retryConfig?: RetryConfig
+    retryConfig?: RetryConfig,
 }
 
 export interface InitResponse<O = any> {
