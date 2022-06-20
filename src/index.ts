@@ -216,7 +216,7 @@ export interface RetryConfig {
 
 export interface MethodCall extends GetInstance {
     methodName: string
-    retryConfig?: RetryConfig,
+    retryConfig?: RetryConfig
 }
 
 export interface InitResponse<O = any> {
@@ -224,7 +224,6 @@ export interface InitResponse<O = any> {
     config?: Configuration
     response?: Response<O>
 }
-
 
 export interface GenerateCustomToken {
     userId: string
@@ -246,6 +245,7 @@ export interface ReadOnlyOperationsInput {
     listFiles?: ListFiles[]
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
+    request?: StaticIPRequest[]
 }
 
 // * <database>
@@ -274,6 +274,52 @@ export interface QueryDatabase {
     limit?: number
 }
 // * </database>
+
+export enum StaticIPHttpMethod {
+    'get' = 'get',
+    'GET' = 'GET',
+    'delete' = 'delete',
+    'DELETE' = 'DELETE',
+    'head' = 'head',
+    'HEAD' = 'HEAD',
+    'options' = 'options',
+    'OPTIONS' = 'OPTIONS',
+    'post' = 'post',
+    'POST' = 'POST',
+    'put' = 'put',
+    'PUT' = 'PUT',
+    'patch' = 'patch',
+    'PATCH' = 'PATCH',
+    'purge' = 'purge',
+    'PURGE' = 'PURGE',
+    'link' = 'link',
+    'LINK' = 'LINK',
+    'unlink' = 'unlink',
+    'UNLINK' = 'UNLINK',
+}
+export interface StaticIPCallback {
+    projectId: string
+    classId: string
+    instanceId: string
+    methodName: string
+}
+export interface StaticIPRequest {
+    url: string
+    data: {
+        requestData: any
+        extraData: any
+        returnEndpoint: StaticIPCallback
+    }
+    headers?: Record<string, string>
+    method?: StaticIPHttpMethod
+    timeout?: number
+    sync?: boolean
+    auth?: {
+        username: string
+        password: string
+    }
+    disableSSL?: boolean
+}
 
 export interface OperationsInput extends ReadOnlyOperationsInput {
     setMemory?: SetMemory[]
@@ -306,6 +352,7 @@ export interface ReadonlyOperationsOutput {
     listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
+    request: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
