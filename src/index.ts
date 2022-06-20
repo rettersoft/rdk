@@ -225,6 +225,7 @@ export interface InitResponse<O = any> {
     response?: Response<O>
 }
 
+
 export interface GenerateCustomToken {
     userId: string
     identity: string
