@@ -466,7 +466,6 @@ export default class CloudObjectsOperator {
         return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
     }
 
-
     /**
      *
      * Generates custom user token which can be used to authenticate via Retter SDKs
@@ -662,7 +661,6 @@ export default class CloudObjectsOperator {
         })
     }
 
-
     /**
      *
      * Uploads file
@@ -775,6 +773,10 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.queryDatabase.name)
     }
     // * </database>
+
+    async request(input: StaticIPRequest): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.request.name)
+    }
 }
 
 
@@ -896,7 +898,7 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
-     addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
+    addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
         if (!this.payload.addToSortedSet) this.payload.addToSortedSet = []
         this.payload.addToSortedSet.push(input)
         return this
@@ -961,6 +963,12 @@ export class CloudObjectsPipeline {
     queryDatabase(input: QueryDatabase): CloudObjectsPipeline {
         if (!this.payload.queryDatabase) this.payload.queryDatabase = []
         this.payload.queryDatabase.push(input)
+        return this
+    }
+
+    request(input: StaticIPRequest): CloudObjectsPipeline {
+        if (!this.payload.request) this.payload.request = []
+        this.payload.request.push(input)
         return this
     }
 
