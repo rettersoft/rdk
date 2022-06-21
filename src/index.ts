@@ -307,9 +307,9 @@ export interface StaticIPCallback {
 export interface StaticIPRequest {
     url: string
     data: {
-        requestData: any
-        returnData: any
-        returnEndpoint: StaticIPCallback
+        requestData?: any
+        returnData?: any
+        returnEndpoint?: StaticIPCallback
     }
     headers?: Record<string, string>
     method?: StaticIPHttpMethod
