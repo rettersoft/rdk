@@ -308,7 +308,7 @@ export interface StaticIPRequest {
     url: string
     data: {
         requestData: any
-        extraData: any
+        returnData: any
         returnEndpoint: StaticIPCallback
     }
     headers?: Record<string, string>
