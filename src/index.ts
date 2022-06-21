@@ -246,6 +246,7 @@ export interface ReadOnlyOperationsInput {
     listFiles?: ListFiles[]
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
+    request?: StaticIPRequest[]
 }
 
 // * <database>
@@ -274,6 +275,52 @@ export interface QueryDatabase {
     limit?: number
 }
 // * </database>
+
+export enum StaticIPHttpMethod {
+    'get' = 'get',
+    'GET' = 'GET',
+    'delete' = 'delete',
+    'DELETE' = 'DELETE',
+    'head' = 'head',
+    'HEAD' = 'HEAD',
+    'options' = 'options',
+    'OPTIONS' = 'OPTIONS',
+    'post' = 'post',
+    'POST' = 'POST',
+    'put' = 'put',
+    'PUT' = 'PUT',
+    'patch' = 'patch',
+    'PATCH' = 'PATCH',
+    'purge' = 'purge',
+    'PURGE' = 'PURGE',
+    'link' = 'link',
+    'LINK' = 'LINK',
+    'unlink' = 'unlink',
+    'UNLINK' = 'UNLINK',
+}
+export interface StaticIPCallback {
+    projectId: string
+    classId: string
+    instanceId: string
+    methodName: string
+}
+export interface StaticIPRequest {
+    url: string
+    data: {
+        requestData?: any
+        returnData?: any
+        returnEndpoint?: StaticIPCallback
+    }
+    headers?: Record<string, string>
+    method?: StaticIPHttpMethod
+    timeout?: number
+    sync?: boolean
+    auth?: {
+        username: string
+        password: string
+    }
+    disableSSL?: boolean
+}
 
 export interface OperationsInput extends ReadOnlyOperationsInput {
     setMemory?: SetMemory[]
@@ -306,6 +353,7 @@ export interface ReadonlyOperationsOutput {
     listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
+    request: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -417,7 +465,6 @@ export default class CloudObjectsOperator {
     private async sendSingleOperation(input: any, operationType: string) {
         return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
     }
-
 
     /**
      *
@@ -614,7 +661,6 @@ export default class CloudObjectsOperator {
         })
     }
 
-
     /**
      *
      * Uploads file
@@ -727,6 +773,10 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.queryDatabase.name)
     }
     // * </database>
+
+    async request(input: StaticIPRequest): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.request.name)
+    }
 }
 
 
@@ -848,7 +898,7 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
-     addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
+    addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
         if (!this.payload.addToSortedSet) this.payload.addToSortedSet = []
         this.payload.addToSortedSet.push(input)
         return this
@@ -913,6 +963,12 @@ export class CloudObjectsPipeline {
     queryDatabase(input: QueryDatabase): CloudObjectsPipeline {
         if (!this.payload.queryDatabase) this.payload.queryDatabase = []
         this.payload.queryDatabase.push(input)
+        return this
+    }
+
+    request(input: StaticIPRequest): CloudObjectsPipeline {
+        if (!this.payload.request) this.payload.request = []
+        this.payload.request.push(input)
         return this
     }
 
