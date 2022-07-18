@@ -1,4 +1,5 @@
 import axios from 'axios'
+import _ from 'lodash'
 export interface KeyValue {
     [key: string]: any
 }
@@ -372,7 +373,26 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deployClass?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
 }
+export interface ChuckedOperations {
+    writeToDatabase?: WriteToDatabase[][]
+    readDatabase?: ReadDatabase[][]
+    removeFromDatabase?: RemoveFromDatabase[][]
+    queryDatabase?: QueryDatabase[][]
 
+    deleteMemory?: OperationResponse[][]
+    incrementMemory?: OperationResponse[][]
+    setMemory?: OperationResponse[][]
+    getMemory?: OperationResponse[][]
+
+    addToSortedSet?: OperationResponse[][]
+    removeFromSortedSet?: OperationResponse[][]
+    getFromSortedSet?: OperationResponse[][]
+    querySortedSet?: OperationResponse[][]
+    
+    getLookUpKey?: OperationResponse[][]
+    setLookUpKey?: OperationResponse[][]
+    deleteLookUpKey?: OperationResponse[][]
+}
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
     state?: State<PUB, PRIV, USER, ROLE>
     response?: Response<T>
@@ -418,7 +438,7 @@ export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: 
 function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
-async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
+export async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
 
     if (concurrentLambdaCount > concurrentLambdaCountLimit) {
         throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
@@ -460,6 +480,10 @@ export default class CloudObjectsOperator {
      */
     pipeline(): CloudObjectsPipeline {
         return new CloudObjectsPipeline()
+    }
+
+    dataPipeline(): CloudObjectsDataPipeline {
+        return new CloudObjectsDataPipeline()
     }
 
     private async sendSingleOperation(input: any, operationType: string) {
@@ -781,7 +805,7 @@ export default class CloudObjectsOperator {
 
 
 export class CloudObjectsPipeline {
-    private payload: OperationsInput = {}
+    payload: OperationsInput = {}
 
     /**
      *
@@ -1138,5 +1162,130 @@ export class CloudObjectsPipeline {
             }
             return r
         })
+    }
+}
+
+/*
+    for an example lets assume user has to insterted following operations to pipeline:
+    -> 100 writeToDatabase operations
+    -> 300 readDatabase operations
+
+    normally user cant send all these operations in one request,
+    we have limits by operation type
+    -> for example:
+            * writetoDatabase limit 25
+            * readDatabase limit 100
+            
+    "CloudObjectsDataPipeline" can handle this situation without any extra code on usercode side
+
+    this is how: 
+    1. we will seperate the operations into chunks by allowed limits for each operation:
+        -> for example situation above we will have following chunks:
+            *  4 chunks for writeToDatabase
+            *  3 chunks for readDatabase
+        
+    2. generate default payload for a normal pipeline from these chunks
+        * consume 1 chunk from each operation
+    
+    3. send this payload just like a normal pipeline
+    
+    3. do this until no chunks are left:
+        -> for example situation above we will have to do this 4 times
+        -> 1. invoke lambda 25 writetoDatabase, 100 readDatabase
+        -> 2. invoke lambda 25 writetoDatabase, 100 readDatabase
+        -> 3. invoke lambda 25 writetoDatabase, 100 readDatabase
+        -> 4. invoke lambda 25 writetoDatabase,
+
+    4. combine the responses from the chunks and return the final response
+*/
+export class CloudObjectsDataPipeline extends CloudObjectsPipeline {
+    // TODO: add metodCall operations
+    getChuckSizeForOperation(operation: string): number {
+        switch (operation) {
+
+            case 'setMemory':
+            case 'addToSortedSet':
+            case 'writeToDatabase':
+            case 'setLookUpKey':
+                return 25
+
+            case 'getMemory': 
+            case 'getFromSortedSet':
+            case 'readDatabase':
+            case 'getLookUpKey':
+                return 100
+
+            case 'deleteMemory':
+            case 'removeFromSortedSet':
+            case 'removeFromDatabase':
+            case 'deleteLookUpKey':
+                return 25
+
+            case 'incrementMemory':
+            case 'querySortedSet':
+            case 'queryDatabase':
+                return 10
+
+            default:
+                break
+        }
+        return 0
+    }
+
+    generateChunks(payload: OperationsInput): ChuckedOperations {
+        const chunks: ChuckedOperations = {}
+
+        // seperate to chucks by operation
+        for (const [key, value] of Object.entries(payload)) {
+            if (!value.length) continue
+
+            // each operation can have a different limit so lets get the limit for operation seperatyly
+            const chunkSize = this.getChuckSizeForOperation(key)
+
+            // filter out non supported operations
+            if (!chunkSize) continue
+
+            // chunkfiy operations by chunkSize
+            chunks[key] = _.chunk(value, chunkSize)
+        }
+
+        return chunks
+    }
+
+    // generate default payload for a normal pipeline from 1 chunk of each operation
+    consumeChunk(chunks: ChuckedOperations): OperationsInput {
+        const payload: OperationsInput = {}
+        for (const [key, value] of Object.entries(chunks)) {
+            if (!value.length) continue
+            
+            // consume a chunk
+            payload[key] = value[0]
+
+            // remove consumed chunk from chunks
+            chunks[key] = _.slice(value, 1)
+        }
+        return payload
+    }
+
+    async send(): Promise<OperationsOutput> {
+        const allRes: OperationsOutput = {} as OperationsOutput 
+
+        // payload now can hold many operations so lets split them into chucks
+        const chunks = this.generateChunks(this.payload)   
+     
+        // do this until all chucks are prosessed
+        while (Object.values(chunks).some((v) => v.length > 0)) {
+            
+            const payload: OperationsInput = this.consumeChunk(chunks)
+
+            // send the operations
+            const curRes = await invokeLambda(payload)
+
+            // combine the responses
+            _.mergeWith(allRes, curRes, (val1: OperationsOutput[], val2: OperationsOutput[]) => val1.concat(val2))
+        } 
+
+        this.payload = {}
+        return allRes
     }
 }
