@@ -1282,7 +1282,7 @@ export class CloudObjectsDataPipeline extends CloudObjectsPipeline {
             const curRes = await invokeLambda(payload)
 
             // combine the responses
-            _.mergeWith(allRes, curRes, (val1: OperationsOutput[], val2: OperationsOutput[]) => val1.concat(val2))
+            _.mergeWith(allRes, curRes, (val1: OperationsOutput[], val2: OperationsOutput[]) => val1 ? val1.concat(val2) : val2)
         } 
 
         this.payload = {}
