@@ -438,7 +438,7 @@ export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: 
 function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
-export async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
+async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
 
     if (concurrentLambdaCount > concurrentLambdaCountLimit) {
         throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
