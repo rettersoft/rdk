@@ -373,7 +373,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deployClass?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
 }
-export interface ChuckedOperations {
+export interface ChunkedOperations {
     writeToDatabase?: WriteToDatabase[][]
     readDatabase?: ReadDatabase[][]
     removeFromDatabase?: RemoveFromDatabase[][]
@@ -1232,8 +1232,8 @@ export class CloudObjectsDataPipeline extends CloudObjectsPipeline {
         return 0
     }
 
-    generateChunks(payload: OperationsInput): ChuckedOperations {
-        const chunks: ChuckedOperations = {}
+    generateChunks(payload: OperationsInput): ChunkedOperations {
+        const chunks: ChunkedOperations = {}
 
         // seperate to chucks by operation
         for (const [key, value] of Object.entries(payload)) {
@@ -1253,7 +1253,7 @@ export class CloudObjectsDataPipeline extends CloudObjectsPipeline {
     }
 
     // generate default payload for a normal pipeline from 1 chunk of each operation
-    consumeChunk(chunks: ChuckedOperations): OperationsInput {
+    consumeChunk(chunks: ChunkedOperations): OperationsInput {
         const payload: OperationsInput = {}
         for (const [key, value] of Object.entries(chunks)) {
             if (!value.length) continue
