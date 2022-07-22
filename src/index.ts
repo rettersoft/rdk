@@ -353,7 +353,7 @@ export interface ReadonlyOperationsOutput {
     listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
-    request: OperationResponse[],
+    request?: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
