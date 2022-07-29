@@ -247,6 +247,7 @@ export interface ReadOnlyOperationsInput {
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
     request?: StaticIPRequest[]
+    httpRequest?: StaticIPRequest[]
 }
 
 // * <database>
@@ -354,6 +355,7 @@ export interface ReadonlyOperationsOutput {
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
     request?: OperationResponse[],
+    httpRequest?: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -777,6 +779,10 @@ export default class CloudObjectsOperator {
     async request(input: StaticIPRequest): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.request.name)
     }
+
+    async httpRequest(input: StaticIPRequest): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.httpRequest.name)
+    }
 }
 
 
@@ -969,6 +975,12 @@ export class CloudObjectsPipeline {
     request(input: StaticIPRequest): CloudObjectsPipeline {
         if (!this.payload.request) this.payload.request = []
         this.payload.request.push(input)
+        return this
+    }
+
+    httpRequest(input: StaticIPRequest): CloudObjectsPipeline {
+        if (!this.payload.httpRequest) this.payload.httpRequest = []
+        this.payload.httpRequest.push(input)
         return this
     }
 
