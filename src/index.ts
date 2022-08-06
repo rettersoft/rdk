@@ -37,6 +37,7 @@ export interface CloudObjectResponse<T = any> {
 
 export interface Response<T = any> extends CloudObjectResponse<T> {
     isBase64Encoded?: boolean
+    retryAfter?: number
 }
 
 export interface Request<T = any> {
