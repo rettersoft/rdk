@@ -400,9 +400,35 @@ import { Lambda } from 'aws-sdk'
 let lambda: Lambda | undefined = undefined
 let token = ''
 let operationLambda = ''
+let ctx: Record<string, any> = {}
 
 const fileSizeLimit = 250000000
 
+class Segment {
+    readonly id: string
+    readonly name: string
+    readonly from: number
+    constructor(name: string) {
+        this.id = randomHex()
+        this.name = name
+        this.from = Date.now()
+    }
+
+    close() {
+        segments = segments.filter(s => s.id !== this.id)
+        if (ctx?.tracing) {
+            const { projectId, classId, instanceId, methodName, tracing } = ctx
+            console.log(JSON.stringify({
+                __identity: 'COSTracing', projectId, classId, instanceId, method: methodName, 
+                segment: { id: this.id, name: this.name },
+                from: this.from / 1000,
+                to: Date.now() / 1000,
+                tracing
+            }))
+        }
+    }
+}
+let segments: Array<Segment> = []
 
 let operationCountMilestone = 0;
 let concurrentLambdaCountLimit = 0;
@@ -410,19 +436,34 @@ let concurrentLambdaCountLimit = 0;
 let usageCheckCounter = 0;
 let operationCount = 0
 let concurrentLambdaCount = 0;
-export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: number) {
+export function init(c: any, t: string, o: string, x: any, ocLimit?: number, clcLimit?: number) {
     lambda = new Lambda({ credentials: c })
     token = t
+    ctx = x
     operationLambda = o
     operationCountMilestone = ocLimit || 100
     concurrentLambdaCountLimit = clcLimit || 10
+    segments = []
+}
+
+function randomHex() {
+    return [...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')
+}
+
+export function openSegment(name: string) {
+    let segment = segments.find(s => s.name === name)
+    if (segment) return segment
+
+    segment = new Segment(name)
+    segments.push(segment)
+    return segment
 }
 
 function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
 async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
-
+    const segment = openSegment('OPERATION')
     if (concurrentLambdaCount > concurrentLambdaCountLimit) {
         throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
     }
@@ -439,10 +480,11 @@ async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput>
     return lambda!
         .invoke({
             FunctionName: operationLambda,
-            Payload: JSON.stringify({ data: payload, token, checkUsage }),
+            Payload: JSON.stringify({ data: payload, token, checkUsage, segments }),
         })
         .promise()
         .then(({ FunctionError: e, Payload: response }) => {
+            segment.close()
             concurrentLambdaCount--
             if (e) throw new Error(e)
             const r = JSON.parse(response as string)
