@@ -33,6 +33,7 @@ export interface CloudObjectResponse<T = any> {
     statusCode: number
     body?: T
     headers?: KeyValueString
+    retryAfter?: number
 }
 
 export interface Response<T = any> extends CloudObjectResponse<T> {
