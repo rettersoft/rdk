@@ -262,6 +262,7 @@ export interface WriteToDatabase {
     partKey: string
     sortKey: string
     memory?: boolean
+    expireAt?: number
     data: Record<string, unknown>
 }
 export interface RemoveFromDatabase {
