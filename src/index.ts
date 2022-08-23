@@ -158,7 +158,7 @@ export interface InvalidateCache {
     instanceId?: string
 }
 export type Architecture = 'arm64' | 'x86_64' | 'x86_64,arm64' | 'arm64,x86_64'
-export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs14.x,nodejs12.x'
+export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs16.x' | 'nodejs14.x,nodejs12.x'
 export interface UpsertDependency {
     dependencyName: string
     zipFile: Buffer
