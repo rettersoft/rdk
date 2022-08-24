@@ -33,10 +33,12 @@ export interface CloudObjectResponse<T = any> {
     statusCode: number
     body?: T
     headers?: KeyValueString
+    retryAfter?: number
 }
 
 export interface Response<T = any> extends CloudObjectResponse<T> {
     isBase64Encoded?: boolean
+    retryAfter?: number
 }
 
 export interface Request<T = any> {
@@ -156,7 +158,7 @@ export interface InvalidateCache {
     instanceId?: string
 }
 export type Architecture = 'arm64' | 'x86_64' | 'x86_64,arm64' | 'arm64,x86_64'
-export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs14.x,nodejs12.x'
+export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs16.x' | 'nodejs14.x,nodejs12.x'
 export interface UpsertDependency {
     dependencyName: string
     zipFile: Buffer
@@ -251,6 +253,7 @@ export interface ReadOnlyOperationsInput {
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
     request?: StaticIPRequest[]
+    httpRequest?: StaticIPRequest[]
 }
 
 // * <database>
@@ -263,6 +266,7 @@ export interface WriteToDatabase {
     partKey: string
     sortKey: string
     memory?: boolean
+    expireAt?: number
     data: Record<string, unknown>
 }
 export interface RemoveFromDatabase {
@@ -358,7 +362,8 @@ export interface ReadonlyOperationsOutput {
     listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
-    request: OperationResponse[],
+    request?: OperationResponse[],
+    httpRequest?: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -794,6 +799,10 @@ export default class CloudObjectsOperator {
     async request(input: StaticIPRequest): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.request.name)
     }
+
+    async httpRequest(input: StaticIPRequest): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.httpRequest.name)
+    }
 }
 
 
@@ -999,6 +1008,12 @@ export class CloudObjectsPipeline {
     request(input: StaticIPRequest): CloudObjectsPipeline {
         if (!this.payload.request) this.payload.request = []
         this.payload.request.push(input)
+        return this
+    }
+
+    httpRequest(input: StaticIPRequest): CloudObjectsPipeline {
+        if (!this.payload.httpRequest) this.payload.httpRequest = []
+        this.payload.httpRequest.push(input)
         return this
     }
 
