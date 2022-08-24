@@ -234,7 +234,6 @@ export interface GenerateCustomToken {
 
 export interface TerminateSession {
     userId: string
-    all?: boolean
 }
 
 export interface ReadOnlyOperationsInput {
