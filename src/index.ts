@@ -479,7 +479,7 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<GenerateCustomTokenResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-      async terminateSession(input: TerminateSession): Promise<OperationResponse | undefined> {
+    async terminateSession(input: TerminateSession): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.terminateSession.name)
     }
 
@@ -811,6 +811,19 @@ export class CloudObjectsPipeline {
     generateCustomToken(input: GenerateCustomToken): CloudObjectsPipeline {
         if (!this.payload.generateCustomToken) this.payload.generateCustomToken = []
         this.payload.generateCustomToken.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Gets the instance id coressponds to the given lookup key
+     * @param {TerminateSession} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+     terminateSession(input: TerminateSession): CloudObjectsPipeline {
+        if (!this.payload.terminateSession) this.payload.terminateSession = []
+        this.payload.terminateSession.push(input)
         return this
     }
 
