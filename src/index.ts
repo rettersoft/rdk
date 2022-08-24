@@ -166,6 +166,10 @@ export interface UpsertDependency {
     runtimes?: Runtime
 }
 
+export interface DeleteDependency {
+    dependencyName: string
+}
+
 export interface SetFile extends GetFile {
     body: string
 }
@@ -339,6 +343,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     setLookUpKey?: LookUpKey[]
     deleteLookUpKey?: LookUpKey[]
     upsertDependency?: UpsertDependency[]
+    deleteDependency?: DeleteDependency[]
     deployClass?: DeployClass[]
     invalidateCache?: InvalidateCache[]
 }
@@ -374,6 +379,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     setLookUpKey?: OperationResponse[]
     deleteLookUpKey?: OperationResponse[]
     upsertDependency?: OperationResponse[]
+    deleteDependency?: OperationResponse[]
     deployClass?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
 }
@@ -751,6 +757,17 @@ export default class CloudObjectsOperator {
                     ),
                 )
         })
+    }
+
+    /**
+     *
+     * Delete a dependency
+     * @param {deleteDependency} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async deleteDependency(input: DeleteDependency): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteDependency.name)
     }
 
     /**
