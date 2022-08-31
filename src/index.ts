@@ -234,6 +234,10 @@ export interface GenerateCustomToken {
     claims?: KeyValue
 }
 
+export interface TerminateSession {
+    userId: string
+}
+
 export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
     getFromSortedSet?: GetFromSortedSet[]
@@ -341,6 +345,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     upsertDependency?: UpsertDependency[]
     deployClass?: DeployClass[]
     invalidateCache?: InvalidateCache[]
+    terminateSession?: TerminateSession[]
 }
 
 export interface ReadonlyOperationsOutput {
@@ -376,6 +381,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     upsertDependency?: OperationResponse[]
     deployClass?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
+    terminateSession?: TerminateSession[]
 }
 
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
@@ -469,6 +475,17 @@ export default class CloudObjectsOperator {
 
     private async sendSingleOperation(input: any, operationType: string) {
         return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
+    }
+
+     /**
+     *
+     * Terminate ProjectUser session (or all sessions)
+     * @param {TerminateSession} input
+     * @return {*}  {(Promise<GenerateCustomTokenResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async terminateSession(input: TerminateSession): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.terminateSession.name)
     }
 
     /**
@@ -803,6 +820,19 @@ export class CloudObjectsPipeline {
     generateCustomToken(input: GenerateCustomToken): CloudObjectsPipeline {
         if (!this.payload.generateCustomToken) this.payload.generateCustomToken = []
         this.payload.generateCustomToken.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Gets the instance id coressponds to the given lookup key
+     * @param {TerminateSession} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+     terminateSession(input: TerminateSession): CloudObjectsPipeline {
+        if (!this.payload.terminateSession) this.payload.terminateSession = []
+        this.payload.terminateSession.push(input)
         return this
     }
 
