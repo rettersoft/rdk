@@ -451,7 +451,7 @@ async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput>
             const err = r.error || r.limitError
             if (err)
                 throw new Error(err)
-            delete r.limitError
+            delete r?.limitError
             delete r?.error
             return r as OperationsOutput
         })
