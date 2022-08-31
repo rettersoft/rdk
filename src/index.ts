@@ -448,9 +448,11 @@ async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput>
             concurrentLambdaCount--
             if (e) throw new Error(e)
             const r = JSON.parse(response as string)
-            if (r.error)
-                throw new Error(r.error)
-            delete r.error
+            const err = r.error || r.limitError
+            if (err)
+                throw new Error(err)
+            delete r.limitError
+            delete r?.error
             return r as OperationsOutput
         })
 
