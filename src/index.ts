@@ -396,6 +396,11 @@ export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = U
     nextFlowId?: string
 }
 
+export interface RioEvent {
+    name: string
+    payload: Record<string, any>
+}
+
 export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState>
     extends StepResponse<O, PUB, PRIV, USER, ROLE> {
     context: Context
@@ -407,6 +412,7 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     response: Response<O>
     schedule: Schedule[]
     tasks: Task[]
+    events: RioEvent[]
     nextFlowId?: string
 }
 
