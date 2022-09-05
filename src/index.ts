@@ -96,6 +96,7 @@ export interface Schedule {
     payload?: any
     method: string
     after: number
+    retryConfig?: RetryConfig
 }
 export interface Task {
     classId?: string
@@ -103,6 +104,7 @@ export interface Task {
     payload?: any
     method: string
     after: number
+    retryConfig?: RetryConfig
 }
 export interface GetMemory {
     key: string
