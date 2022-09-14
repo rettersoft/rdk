@@ -244,6 +244,11 @@ export interface TerminateSession {
     userId: string
 }
 
+export interface DeleteInstance {
+    classId: string
+    instanceId: string
+}
+
 export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
     getFromSortedSet?: GetFromSortedSet[]
@@ -353,6 +358,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deployClass?: DeployClass[]
     invalidateCache?: InvalidateCache[]
     terminateSession?: TerminateSession[]
+    deleteInstance?: DeleteInstance[]
 }
 
 export interface ReadonlyOperationsOutput {
@@ -371,6 +377,7 @@ export interface ReadonlyOperationsOutput {
     generateCustomToken?: GenerateCustomTokenResponse[]
     request?: OperationResponse[],
     httpRequest?: OperationResponse[],
+    deleteInstance?: CloudObjectResponse[]
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -492,6 +499,18 @@ export default class CloudObjectsOperator {
     private async sendSingleOperation(input: any, operationType: string) {
         return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
     }
+
+    /**
+     *
+     * Terminate ProjectUser session (or all sessions)
+     * @param {DeleteInstance} input
+     * @return {*}  {(Promise<GenerateCustomTokenResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+     async deleteInstance(input: DeleteInstance): Promise<CloudObjectResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteInstance.name)
+    }
+
 
      /**
      *
@@ -849,6 +868,19 @@ export class CloudObjectsPipeline {
         this.payload.generateCustomToken.push(input)
         return this
     }
+
+    /**
+     *
+     * Gets the instance id coressponds to the given lookup key
+     * @param {TerminateSession} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+         deleteInstance(input: DeleteInstance): CloudObjectsPipeline {
+            if (!this.payload.deleteInstance) this.payload.deleteInstance = []
+            this.payload.deleteInstance.push(input)
+            return this
+        }
 
     /**
      *
