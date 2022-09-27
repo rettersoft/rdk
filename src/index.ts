@@ -227,6 +227,11 @@ export interface MethodCall extends GetInstance {
     retryConfig?: RetryConfig,
 }
 
+export interface BulkImport {
+    getInstance?: GetInstance[],
+    methodCall?: MethodCall[],
+}
+
 export interface InitResponse<O = any> {
     state?: State
     config?: Configuration
@@ -257,6 +262,7 @@ export interface ReadOnlyOperationsInput {
     queryDatabase?: QueryDatabase[]
     getFile?: GetFile[]
     getLookUpKey?: LookUpKey[]
+    bulkImport?: BulkImport[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
     listInstanceIds?: ListInstanceIds[]
@@ -369,6 +375,7 @@ export interface ReadonlyOperationsOutput {
     queryDatabase?: OperationResponse[]
     getFile?: OperationResponse[]
     getLookUpKey?: OperationResponse[]
+    bulkImport?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: CloudObjectResponse[]
     listInstanceIds?: CloudObjectResponse[]
@@ -507,12 +514,12 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<GenerateCustomTokenResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-     async deleteInstance(input: DeleteInstance): Promise<CloudObjectResponse | undefined> {
+    async deleteInstance(input: DeleteInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteInstance.name)
     }
 
 
-     /**
+    /**
      *
      * Terminate ProjectUser session (or all sessions)
      * @param {TerminateSession} input
@@ -532,6 +539,17 @@ export default class CloudObjectsOperator {
      */
     async generateCustomToken(input: GenerateCustomToken): Promise<GenerateCustomTokenResponse | undefined> {
         return this.sendSingleOperation(input, this.generateCustomToken.name)
+    }
+
+    /**
+     *
+     * Starts a bulk import operation in background
+     * @param {BulkImport} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof OperationResponse
+     */
+    async bulkImport(input: BulkImport): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.bulkImport.name)
     }
 
     /**
@@ -876,11 +894,11 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
-         deleteInstance(input: DeleteInstance): CloudObjectsPipeline {
-            if (!this.payload.deleteInstance) this.payload.deleteInstance = []
-            this.payload.deleteInstance.push(input)
-            return this
-        }
+    deleteInstance(input: DeleteInstance): CloudObjectsPipeline {
+        if (!this.payload.deleteInstance) this.payload.deleteInstance = []
+        this.payload.deleteInstance.push(input)
+        return this
+    }
 
     /**
      *
@@ -889,7 +907,7 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
-     terminateSession(input: TerminateSession): CloudObjectsPipeline {
+    terminateSession(input: TerminateSession): CloudObjectsPipeline {
         if (!this.payload.terminateSession) this.payload.terminateSession = []
         this.payload.terminateSession.push(input)
         return this
@@ -1112,6 +1130,19 @@ export class CloudObjectsPipeline {
     deleteFile(input: GetFile): CloudObjectsPipeline {
         if (!this.payload.deleteFile) this.payload.deleteFile = []
         this.payload.deleteFile.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Start a bulk import operation in background
+     * @param {BulkImport} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+    bulkImport(input: BulkImport): CloudObjectsPipeline {
+        if (!this.payload.bulkImport) this.payload.bulkImport = []
+        this.payload.bulkImport.push(input)
         return this
     }
 
