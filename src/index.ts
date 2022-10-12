@@ -1,4 +1,6 @@
 import axios from 'axios'
+import crypto from 'crypto'
+
 export interface KeyValue {
     [key: string]: any
 }
@@ -227,7 +229,7 @@ export interface MethodCall extends GetInstance {
     retryConfig?: RetryConfig,
 }
 
-export interface BulkImport {
+export interface Batch {
     getInstance?: GetInstance[],
     methodCall?: MethodCall[],
 }
@@ -262,7 +264,7 @@ export interface ReadOnlyOperationsInput {
     queryDatabase?: QueryDatabase[]
     getFile?: GetFile[]
     getLookUpKey?: LookUpKey[]
-    bulkImport?: BulkImport[]
+    batch?: Batch[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
     listInstanceIds?: ListInstanceIds[]
@@ -375,7 +377,7 @@ export interface ReadonlyOperationsOutput {
     queryDatabase?: OperationResponse[]
     getFile?: OperationResponse[]
     getLookUpKey?: OperationResponse[]
-    bulkImport?: OperationResponse[]
+    batch?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: CloudObjectResponse[]
     listInstanceIds?: CloudObjectResponse[]
@@ -544,12 +546,30 @@ export default class CloudObjectsOperator {
     /**
      *
      * Starts a bulk import operation in background
-     * @param {BulkImport} input
+     * @param {Batch} input
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof OperationResponse
      */
-    async bulkImport(input: BulkImport): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.bulkImport.name)
+    async batch(input: Batch): Promise<OperationResponse | undefined> {
+        const serializedBatch = JSON.stringify(input)
+        const filename = crypto.createHash('md5').update(`${Math.random()}${serializedBatch}${Date.now()}`).digest('hex') + '.json';
+        const size = calculateSize(serializedBatch)
+
+        return this.sendSingleOperation({ filename }, this.batch.name)
+            .then((r: OperationResponse) => {
+                if (!r.success) return r
+
+                return axios
+                    .put(r.data.url, serializedBatch, {
+                        headers: {
+                            'Content-Length': size.toString(),
+                        },
+                        maxBodyLength: fileSizeLimit,
+                        maxContentLength: fileSizeLimit,
+                    })
+                    .then(() => this.sendSingleOperation({ filename, commit: true }, this.batch.name))
+                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+            })
     }
 
     /**
@@ -1130,19 +1150,6 @@ export class CloudObjectsPipeline {
     deleteFile(input: GetFile): CloudObjectsPipeline {
         if (!this.payload.deleteFile) this.payload.deleteFile = []
         this.payload.deleteFile.push(input)
-        return this
-    }
-
-    /**
-     *
-     * Start a bulk import operation in background
-     * @param {BulkImport} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    bulkImport(input: BulkImport): CloudObjectsPipeline {
-        if (!this.payload.bulkImport) this.payload.bulkImport = []
-        this.payload.bulkImport.push(input)
         return this
     }
 
