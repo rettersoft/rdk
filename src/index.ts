@@ -214,7 +214,7 @@ export interface ListFiles {
 export interface ListInstanceIds {
     classId?: string
     nextToken?: string
-    beginsWith?: string
+    instanceIdPrefix?: string
 }
 
 export interface RetryConfig {
