@@ -380,7 +380,7 @@ export interface ReadonlyOperationsOutput {
     bulkImport?: OperationResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: CloudObjectResponse[]
-    listInstanceIds?: CloudObjectResponse[]
+    listInstanceIds?: OperationResponse[]
     listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
