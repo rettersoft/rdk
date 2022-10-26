@@ -224,12 +224,12 @@ export interface RetryConfig {
 
 export interface MethodCall extends GetInstance {
     methodName: string
-    retryConfig?: RetryConfig,
+    retryConfig?: RetryConfig
 }
 
 export interface BulkImport {
-    getInstance?: GetInstance[],
-    methodCall?: MethodCall[],
+    getInstance?: GetInstance[]
+    methodCall?: MethodCall[]
 }
 
 export interface InitResponse<O = any> {
@@ -237,7 +237,6 @@ export interface InitResponse<O = any> {
     config?: Configuration
     response?: Response<O>
 }
-
 
 export interface GenerateCustomToken {
     userId: string
@@ -286,6 +285,14 @@ export interface WriteToDatabase {
     expireAt?: number
     data: Record<string, unknown>
 }
+
+export interface IncrementDBEntry {
+    partKey: string
+    sortKey: string
+    value: string
+    path?: string
+}
+
 export interface RemoveFromDatabase {
     partKey: string
     sortKey: string
@@ -354,6 +361,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     addToSortedSet?: AddToSortedSet[]
     removeFromSortedSet?: GetFromSortedSet[]
     writeToDatabase?: WriteToDatabase[]
+    incrementDBEnrty?: IncrementDBEntry[]
     removeFromDatabase?: RemoveFromDatabase[]
     setFile?: (SetFile | SetFileOperation)[]
     deleteFile?: GetFile[]
@@ -382,8 +390,8 @@ export interface ReadonlyOperationsOutput {
     listFiles?: CloudObjectResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
-    request?: OperationResponse[],
-    httpRequest?: OperationResponse[],
+    request?: OperationResponse[]
+    httpRequest?: OperationResponse[]
     deleteInstance?: CloudObjectResponse[]
 }
 
@@ -394,6 +402,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     addToSortedSet?: OperationResponse[]
     removeFromSortedSet?: OperationResponse[]
     writeToDatabase?: OperationResponse[]
+    incrementDBEntry?: OperationResponse[]
     removeFromDatabase?: OperationResponse[]
     setFile?: OperationResponse[]
     deleteFile?: OperationResponse[]
@@ -439,13 +448,12 @@ let operationLambda = ''
 
 const fileSizeLimit = 250000000
 
+let operationCountMilestone = 0
+let concurrentLambdaCountLimit = 0
 
-let operationCountMilestone = 0;
-let concurrentLambdaCountLimit = 0;
-
-let usageCheckCounter = 0;
+let usageCheckCounter = 0
 let operationCount = 0
-let concurrentLambdaCount = 0;
+let concurrentLambdaCount = 0
 export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: number) {
     lambda = new Lambda({ credentials: c })
     token = t
@@ -458,9 +466,8 @@ function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
 async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
-
     if (concurrentLambdaCount > concurrentLambdaCountLimit) {
-        throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
+        throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`)
     }
     operationCount = Object.values(payload).reduce((total, op) => total + op.length, operationCount)
 
@@ -483,17 +490,14 @@ async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput>
             if (e) throw new Error(e)
             const r = JSON.parse(response as string)
             const err = r.error || r.limitError
-            if (err)
-                throw new Error(err)
+            if (err) throw new Error(err)
             delete r?.limitError
             delete r?.error
             return r as OperationsOutput
         })
-
 }
 
 export default class CloudObjectsOperator {
-
     /**
      *
      * Creates a pipeline which gathers operations until the send method is called, and then sends a batch request for all of them.
@@ -517,7 +521,6 @@ export default class CloudObjectsOperator {
     async deleteInstance(input: DeleteInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteInstance.name)
     }
-
 
     /**
      *
@@ -662,7 +665,7 @@ export default class CloudObjectsOperator {
     /**
      *
      * Increments the value of the given key in memory
-     * 
+     *
      * The value have to be a number
      * Input parameter path can be used to increment a nested key.
      * @param {IncrementMemory} input
@@ -724,11 +727,12 @@ export default class CloudObjectsOperator {
     async getFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.getFile.name).then((g) => {
             if (g.success && g.extraData?.url) {
-                return axios.get(g.extraData.url)
+                return axios
+                    .get(g.extraData.url)
                     .then((r) => ({
                         ...g,
                         extraData: undefined,
-                        data: r.data
+                        data: r.data,
                     }))
                     .catch((e) => ({ success: false, error: e.message } as OperationResponse))
             }
@@ -749,7 +753,7 @@ export default class CloudObjectsOperator {
         const setFileOperation: SetFileOperation = {
             ...input,
             size,
-            large: size > 5242880 //5mb
+            large: size > 5242880, //5mb
         }
 
         if (setFileOperation.large) {
@@ -758,7 +762,7 @@ export default class CloudObjectsOperator {
         let promise = this.sendSingleOperation(setFileOperation, this.setFile.name)
         if (setFileOperation.large) {
             promise = promise.then((r: OperationResponse) => {
-                console.log("setFileReturn: ", JSON.stringify(r))
+                console.log('setFileReturn: ', JSON.stringify(r))
                 if (!r.success) return r
                 return axios
                     .put(r.data.url, input.body, {
@@ -849,6 +853,21 @@ export default class CloudObjectsOperator {
     async writeToDatabase(input: WriteToDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.writeToDatabase.name)
     }
+
+    /**
+     *
+     * Increments the value of the given entry in the database
+     *
+     * The value has to be a number
+     * Input parameter path can be used to increment a nested entry.
+     * @param {IncrementDBEntry} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async incrementDBEntry(input: IncrementDBEntry): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.incrementDBEntry.name)
+    }
+
     async readDatabase(input: ReadDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.readDatabase.name)
     }
@@ -869,14 +888,13 @@ export default class CloudObjectsOperator {
     }
 }
 
-
 export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
 
     /**
      *
      * Generates custom user token which can be used to authenticate via Retter SDKs
-     * 
+     *
      * @param {GenerateCustomToken} input
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
@@ -994,7 +1012,7 @@ export class CloudObjectsPipeline {
     /**
      *
      * Increments the value of the given key in memory
-     * 
+     *
      * The value have to be a number
      * Input parameter path can be used to increment a nested key.
      * @param {IncrementMemory} input
@@ -1061,6 +1079,22 @@ export class CloudObjectsPipeline {
     writeToDatabase(input: WriteToDatabase): CloudObjectsPipeline {
         if (!this.payload.writeToDatabase) this.payload.writeToDatabase = []
         this.payload.writeToDatabase.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Increments the value of the given entry in the database
+     *
+     * The value has to be a number
+     * Input parameter path can be used to increment a nested entry.
+     * @param {IncrementDBEntry} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+    incrementDBEntry(input: IncrementDBEntry): CloudObjectsPipeline {
+        if (!this.payload.incrementDBEnrty) this.payload.incrementDBEnrty = []
+        this.payload.incrementDBEnrty.push(input)
         return this
     }
 
@@ -1211,7 +1245,6 @@ export class CloudObjectsPipeline {
         return this
     }
 
-
     /**
      *
      * Sends a batch request for operations gathered in the pipeline
@@ -1222,14 +1255,14 @@ export class CloudObjectsPipeline {
         const setFileOperations: SetFileOperation[] | undefined = this.payload.setFile?.map((s) => ({
             ...s,
             size: calculateSize(s.body!),
-            large: false
+            large: false,
         }))
         const totalSize = setFileOperations?.reduce((sum, o) => sum + o.size, 0)
         const large = totalSize && totalSize > 5242880
         if (large) {
             setFileOperations?.forEach((s) => {
-                s.large = true;
-                s.body = undefined;
+                s.large = true
+                s.body = undefined
             })
         }
 
@@ -1239,34 +1272,41 @@ export class CloudObjectsPipeline {
 
         let promise = invokeLambda(this.payload)
         if (large) {
-            promise = promise.then((r) => Promise.all(r.setFile!.map((r: OperationResponse, i) => {
-                console.log("setFilePipelineReturn: ", JSON.stringify(r))
-                if (!r.success) return r
-                const { body } = this.payload.setFile![i]
-                return axios
-                    .put(r.data.url, body, {
-                        maxBodyLength: fileSizeLimit,
-                        maxContentLength: fileSizeLimit,
-                    })
-                    .then(() => ({ success: true } as OperationResponse))
-                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
-            })).then((setFile) => ({ ...r, setFile })))
+            promise = promise.then((r) =>
+                Promise.all(
+                    r.setFile!.map((r: OperationResponse, i) => {
+                        console.log('setFilePipelineReturn: ', JSON.stringify(r))
+                        if (!r.success) return r
+                        const { body } = this.payload.setFile![i]
+                        return axios
+                            .put(r.data.url, body, {
+                                maxBodyLength: fileSizeLimit,
+                                maxContentLength: fileSizeLimit,
+                            })
+                            .then(() => ({ success: true } as OperationResponse))
+                            .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+                    }),
+                ).then((setFile) => ({ ...r, setFile })),
+            )
         }
         return promise.then((r) => {
             this.payload = {}
             if (r.getFile) {
-                return Promise.all((r.getFile as OperationExtraResponse[]).map((g) => {
-                    if (g.success && g.extraData?.url) {
-                        return axios.get(g.extraData.url).then((r) => ({
-                            ...g,
-                            extraData: undefined,
-                            data: r.data
-                        }))
-                            .catch((e) => ({ success: false, error: e.message } as OperationResponse))
-                    }
-                    return g
-
-                })).then((getFile) => {
+                return Promise.all(
+                    (r.getFile as OperationExtraResponse[]).map((g) => {
+                        if (g.success && g.extraData?.url) {
+                            return axios
+                                .get(g.extraData.url)
+                                .then((r) => ({
+                                    ...g,
+                                    extraData: undefined,
+                                    data: r.data,
+                                }))
+                                .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+                        }
+                        return g
+                    }),
+                ).then((getFile) => {
                     r.getFile = getFile
                     return r
                 })
