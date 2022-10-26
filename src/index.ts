@@ -248,6 +248,7 @@ export interface GenerateCustomToken {
 
 export interface TerminateSession {
     userId: string
+    identity?: string
 }
 
 export interface DeleteInstance {
@@ -410,7 +411,6 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
 export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
     state?: State<PUB, PRIV, USER, ROLE>
     response?: Response<T>
-    nextFlowId?: string
 }
 
 export interface RioEvent {
@@ -430,7 +430,6 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     schedule: Schedule[]
     tasks: Task[]
     events: RioEvent[]
-    nextFlowId?: string
 }
 
 import { Lambda } from 'aws-sdk'
