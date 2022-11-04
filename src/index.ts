@@ -459,7 +459,7 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
 
     concurrentLambdaCount++
     return axios
-        .post('http://sandbox:4243/operation', { data: payload, checkUsage })
+        .post('http://sandbox:4243/operations', { data: payload, checkUsage })
         .then(({ data }) => {
             const e = data.error || data.limitError
             if (e) throw new Error(e)
