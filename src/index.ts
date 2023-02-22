@@ -432,10 +432,9 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     events: RioEvent[]
 }
 
-import { Lambda } from 'aws-sdk'
-let lambda: Lambda | undefined = undefined
-let token = ''
-let operationLambda = ''
+let rdkUrl: string | undefined
+let context: Context | undefined
+let level: number | undefined
 
 const fileSizeLimit = 250000000
 
@@ -446,50 +445,46 @@ let concurrentLambdaCountLimit = 0;
 let usageCheckCounter = 0;
 let operationCount = 0
 let concurrentLambdaCount = 0;
-export function init(c: any, t: string, o: string, ocLimit?: number, clcLimit?: number) {
-    lambda = new Lambda({ credentials: c })
-    token = t
-    operationLambda = o
-    operationCountMilestone = ocLimit || 100
-    concurrentLambdaCountLimit = clcLimit || 10
+export function init(params: { url: string; context: Context; level: number; ocLimit?: number; clcLimit?: number }) {
+    rdkUrl = params.url
+    context = params.context
+    level = params.level
+    operationCountMilestone = params.ocLimit || 100
+    concurrentLambdaCountLimit = params.clcLimit || 10
 }
 
 function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
-async function invokeLambda(payload: OperationsInput): Promise<OperationsOutput> {
+async function callOperationApi(payload: OperationsInput): Promise<OperationsOutput> {
+    // if (concurrentLambdaCount > concurrentLambdaCountLimit) {
+    //     throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
+    // }
 
-    if (concurrentLambdaCount > concurrentLambdaCountLimit) {
-        throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
-    }
     operationCount = Object.values(payload).reduce((total, op) => total + op.length, operationCount)
-
-    const newUsageCheck = Math.floor(operationCount / operationCountMilestone)
-    let checkUsage = false
-    if (newUsageCheck > 0 && newUsageCheck !== usageCheckCounter) {
-        usageCheckCounter = newUsageCheck
-        checkUsage = true
-    }
+    // const newUsageCheck = Math.floor(operationCount / operationCountMilestone)
+    // let checkUsage = false
+    // if (newUsageCheck > 0 && newUsageCheck !== usageCheckCounter) {
+    //     usageCheckCounter = newUsageCheck
+    //     checkUsage = true
+    // }
 
     concurrentLambdaCount++
-    return lambda!
-        .invoke({
-            FunctionName: operationLambda,
-            Payload: JSON.stringify({ data: payload, token, checkUsage }),
-        })
-        .promise()
-        .then(({ FunctionError: e, Payload: response }) => {
-            concurrentLambdaCount--
+    // TODO! custom httpAgent?
+    return axios.post(rdkUrl!, { context, level, input: payload })
+        .then(({ data }) => {
+            const e = data.error || data.limitError
             if (e) throw new Error(e)
-            const r = JSON.parse(response as string)
-            const err = r.error || r.limitError
-            if (err)
-                throw new Error(err)
-            delete r?.limitError
-            delete r?.error
-            return r as OperationsOutput
-        })
 
+            delete data?.limitError
+            delete data?.error
+            concurrentLambdaCount--
+            return data as OperationsOutput
+        })
+        .catch((e) => {
+            concurrentLambdaCount--
+            return e as OperationsOutput
+        })
 }
 
 export default class CloudObjectsOperator {
@@ -504,7 +499,7 @@ export default class CloudObjectsOperator {
     }
 
     private async sendSingleOperation(input: any, operationType: string) {
-        return invokeLambda({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
+        return callOperationApi({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
     }
 
     /**
@@ -1237,7 +1232,7 @@ export class CloudObjectsPipeline {
             this.payload.setFile = setFileOperations
         }
 
-        let promise = invokeLambda(this.payload)
+        let promise = callOperationApi(this.payload)
         if (large) {
             promise = promise.then((r) => Promise.all(r.setFile!.map((r: OperationResponse, i) => {
                 console.log("setFilePipelineReturn: ", JSON.stringify(r))
