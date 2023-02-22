@@ -439,18 +439,18 @@ let level: number | undefined
 const fileSizeLimit = 250000000
 
 
-let operationCountMilestone = 0;
-let concurrentLambdaCountLimit = 0;
+// let operationCountMilestone = 0;
+// let concurrentLambdaCountLimit = 0;
 
-let usageCheckCounter = 0;
+// let usageCheckCounter = 0;
 let operationCount = 0
-let concurrentLambdaCount = 0;
+// let concurrentLambdaCount = 0;
 export function init(params: { url: string; context: Context; level: number; ocLimit?: number; clcLimit?: number }) {
     rdkUrl = params.url
     context = params.context
     level = params.level
-    operationCountMilestone = params.ocLimit || 100
-    concurrentLambdaCountLimit = params.clcLimit || 10
+    // operationCountMilestone = params.ocLimit || 100
+    // concurrentLambdaCountLimit = params.clcLimit || 10
 }
 
 function calculateSize(data: string) {
@@ -469,7 +469,7 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     //     checkUsage = true
     // }
 
-    concurrentLambdaCount++
+    // concurrentLambdaCount++
     // TODO! custom httpAgent?
     return axios.post(rdkUrl!, { context, level, input: payload })
         .then(({ data }) => {
@@ -478,11 +478,11 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
 
             delete data?.limitError
             delete data?.error
-            concurrentLambdaCount--
+            // concurrentLambdaCount--
             return data as OperationsOutput
         })
         .catch((e) => {
-            concurrentLambdaCount--
+            // concurrentLambdaCount--
             return e as OperationsOutput
         })
 }
