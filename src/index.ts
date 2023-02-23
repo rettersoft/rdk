@@ -471,7 +471,7 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
 
     // concurrentLambdaCount++
     // TODO! custom httpAgent?
-    return axios.post(rdkUrl!, { context, level, input: payload })
+    return axios.post(rdkUrl!, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
             const e = data.error || data.limitError
             if (e) throw new Error(e)
