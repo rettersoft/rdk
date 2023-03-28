@@ -574,7 +574,7 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.getInstance.name)
     }
 
-    async listInstanceIds(input: ListInstanceIds): Promise<CloudObjectResponse | undefined> {
+    async listInstanceIds(input: ListInstanceIds): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.listInstanceIds.name)
     }
 
