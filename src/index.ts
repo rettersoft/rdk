@@ -794,6 +794,7 @@ export default class CloudObjectsOperator {
      * @memberof CloudObjectsOperator
      */
     // TODO unused delete this 
+    // @ts-ignore
     async deployClass(input: DeployClass): Promise<OperationResponse | undefined> {
         return Promise.resolve({ success: true } as OperationResponse)
     }
@@ -1205,6 +1206,7 @@ export class CloudObjectsPipeline {
      * @memberof CloudObjectsPipeline
      */
     // TODO unused delete this
+    // @ts-ignore
     deployClass(input: DeployClass): CloudObjectsPipeline {
         return this
     }
