@@ -154,6 +154,9 @@ export interface DeployClass {
     classId: string
     force?: boolean
 }
+export interface DeployProject {
+    force?: boolean
+}
 export interface InvalidateCache {
     classId?: string
     methodName?: string
@@ -364,6 +367,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     upsertDependency?: UpsertDependency[]
     deleteDependency?: DeleteDependency[]
     deployClass?: DeployClass[]
+    deployProject?: DeployProject[]
     invalidateCache?: InvalidateCache[]
     terminateSession?: TerminateSession[]
     deleteInstance?: DeleteInstance[]
@@ -404,6 +408,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     upsertDependency?: OperationResponse[]
     deleteDependency?: OperationResponse[]
     deployClass?: OperationResponse[]
+    deployProject?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
     terminateSession?: TerminateSession[]
 }
@@ -788,8 +793,20 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
+    // TODO unused delete this 
     async deployClass(input: DeployClass): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.deployClass.name)
+        return Promise.resolve({ success: true } as OperationResponse)
+    }
+
+    /**
+     *
+     * Deploys an existing class
+     * @param {DeployProject} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async deployProject(input: DeployProject): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.deployProject.name)
     }
 
     /**
@@ -871,7 +888,7 @@ export class CloudObjectsPipeline {
     /**
      *
      * Generates custom user token which can be used to authenticate via Retter SDKs
-     * 
+     *
      * @param {GenerateCustomToken} input
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
@@ -989,7 +1006,7 @@ export class CloudObjectsPipeline {
     /**
      *
      * Increments the value of the given key in memory
-     * 
+     *
      * The value have to be a number
      * Input parameter path can be used to increment a nested key.
      * @param {IncrementMemory} input
@@ -1187,9 +1204,21 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
+    // TODO unused delete this
     deployClass(input: DeployClass): CloudObjectsPipeline {
-        if (!this.payload.deployClass) this.payload.deployClass = []
-        this.payload.deployClass.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Deploys an existing class
+     * @param {DeployProject} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+    deployProject(input: DeployProject): CloudObjectsPipeline {
+        if (!this.payload.deployProject) this.payload.deployProject = []
+        this.payload.deployProject.push(input)
         return this
     }
 
@@ -1206,7 +1235,6 @@ export class CloudObjectsPipeline {
         return this
     }
 
-
     /**
      *
      * Sends a batch request for operations gathered in the pipeline
@@ -1217,14 +1245,14 @@ export class CloudObjectsPipeline {
         const setFileOperations: SetFileOperation[] | undefined = this.payload.setFile?.map((s) => ({
             ...s,
             size: calculateSize(s.body!),
-            large: false
+            large: false,
         }))
         const totalSize = setFileOperations?.reduce((sum, o) => sum + o.size, 0)
         const large = totalSize && totalSize > 5242880
         if (large) {
             setFileOperations?.forEach((s) => {
-                s.large = true;
-                s.body = undefined;
+                s.large = true
+                s.body = undefined
             })
         }
 
@@ -1234,34 +1262,41 @@ export class CloudObjectsPipeline {
 
         let promise = callOperationApi(this.payload)
         if (large) {
-            promise = promise.then((r) => Promise.all(r.setFile!.map((r: OperationResponse, i) => {
-                console.log("setFilePipelineReturn: ", JSON.stringify(r))
-                if (!r.success) return r
-                const { body } = this.payload.setFile![i]
-                return axios
-                    .put(r.data.url, body, {
-                        maxBodyLength: fileSizeLimit,
-                        maxContentLength: fileSizeLimit,
-                    })
-                    .then(() => ({ success: true } as OperationResponse))
-                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
-            })).then((setFile) => ({ ...r, setFile })))
+            promise = promise.then((r) =>
+                Promise.all(
+                    r.setFile!.map((r: OperationResponse, i) => {
+                        console.log('setFilePipelineReturn: ', JSON.stringify(r))
+                        if (!r.success) return r
+                        const { body } = this.payload.setFile![i]
+                        return axios
+                            .put(r.data.url, body, {
+                                maxBodyLength: fileSizeLimit,
+                                maxContentLength: fileSizeLimit,
+                            })
+                            .then(() => ({ success: true } as OperationResponse))
+                            .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+                    }),
+                ).then((setFile) => ({ ...r, setFile })),
+            )
         }
         return promise.then((r) => {
             this.payload = {}
             if (r.getFile) {
-                return Promise.all((r.getFile as OperationExtraResponse[]).map((g) => {
-                    if (g.success && g.extraData?.url) {
-                        return axios.get(g.extraData.url).then((r) => ({
-                            ...g,
-                            extraData: undefined,
-                            data: r.data
-                        }))
-                            .catch((e) => ({ success: false, error: e.message } as OperationResponse))
-                    }
-                    return g
-
-                })).then((getFile) => {
+                return Promise.all(
+                    (r.getFile as OperationExtraResponse[]).map((g) => {
+                        if (g.success && g.extraData?.url) {
+                            return axios
+                                .get(g.extraData.url)
+                                .then((r) => ({
+                                    ...g,
+                                    extraData: undefined,
+                                    data: r.data,
+                                }))
+                                .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+                        }
+                        return g
+                    }),
+                ).then((getFile) => {
                     r.getFile = getFile
                     return r
                 })
