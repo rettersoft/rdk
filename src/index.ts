@@ -1211,19 +1211,6 @@ export class CloudObjectsPipeline {
 
     /**
      *
-     * Deploys an existing class
-     * @param {DeployProject} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    deployProject(input: DeployProject): CloudObjectsPipeline {
-        if (!this.payload.deployProject) this.payload.deployProject = []
-        this.payload.deployProject.push(input)
-        return this
-    }
-
-    /**
-     *
      * Invalidates cache for given path
      * @param {InvalidateCache} input
      * @return {*}  {CloudObjectsPipeline}
