@@ -461,7 +461,7 @@ export function init(params: { url: string; context: Context; level: number; ocL
 function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
-async function callOperationApi(payload: OperationsInput): Promise<OperationsOutput> {
+async function callOperationApi(payload: OperationsInput): Promise<OperationsOutput | Error> {
     // if (concurrentLambdaCount > concurrentLambdaCountLimit) {
     //     throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
     // }
@@ -478,18 +478,29 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     // TODO! custom httpAgent?
     return axios.post(rdkUrl!, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
-            const e = data.error || data.limitError
-            if (e) throw new Error(e)
+            const message = data.error || data.limitError
+            if (message) {
+                try {
+                    const issues = JSON.parse(message)
+                    if (Array.isArray(issues))
+                        return new Error(issues.filter(i => Array.isArray(i?.path)).map(i => {
+                            if (i.path.length > 2) {
+                                if (i.path[0] === 'input') i.path.shift() // remove input
+                                if (i.path[0] === 'data') i.path.shift() // remove data
+                            }
+                            return `${i.path.join('.')} is ${i.message?.toLowerCase() || 'invalid' }.`
+                        }).join('\n'))
+                } catch (e) {
+                    return new Error(message)
+                }
+            }
 
             delete data?.limitError
             delete data?.error
             // concurrentLambdaCount--
             return data as OperationsOutput
         })
-        .catch((e) => {
-            // concurrentLambdaCount--
-            return e as OperationsOutput
-        })
+        .catch((e) => e)
 }
 
 export default class CloudObjectsOperator {
@@ -504,7 +515,11 @@ export default class CloudObjectsOperator {
     }
 
     private async sendSingleOperation(input: any, operationType: string) {
-        return callOperationApi({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
+        return callOperationApi({ [operationType]: [input] }).then((r) => {
+            if (r instanceof Error) return { success: false, error: r.message }
+
+            return r[operationType]?.pop()
+        })
     }
 
     /**
@@ -1251,8 +1266,10 @@ export class CloudObjectsPipeline {
 
         let promise = callOperationApi(this.payload)
         if (large) {
-            promise = promise.then((r) =>
-                Promise.all(
+            promise = promise.then((r) => {
+                if (r instanceof Error) return r
+
+                return Promise.all(
                     r.setFile!.map((r: OperationResponse, i) => {
                         console.log('setFilePipelineReturn: ', JSON.stringify(r))
                         if (!r.success) return r
@@ -1265,10 +1282,16 @@ export class CloudObjectsPipeline {
                             .then(() => ({ success: true } as OperationResponse))
                             .catch((e) => ({ success: false, error: e.message } as OperationResponse))
                     }),
-                ).then((setFile) => ({ ...r, setFile })),
-            )
+                ).then((setFile) => ({ ...r, setFile }))
+            })
         }
         return promise.then((r) => {
+            if (r instanceof Error)
+                return Object.keys(this.payload).reduce((final, key) => {
+                    final[key] = this.payload[key].map(() => ({ success: false, error: r.message }))
+                    return final
+                }, {})
+
             this.payload = {}
             if (r.getFile) {
                 return Promise.all(
