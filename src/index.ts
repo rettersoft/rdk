@@ -479,21 +479,7 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     return axios.post(rdkUrl!, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
             const message = data.error || data.limitError
-            if (message) {
-                try {
-                    const issues = JSON.parse(message)
-                    if (Array.isArray(issues))
-                        return new Error(issues.filter(i => Array.isArray(i?.path)).map(i => {
-                            if (i.path.length > 2) {
-                                if (i.path[0] === 'input') i.path.shift() // remove input
-                                if (i.path[0] === 'data') i.path.shift() // remove data
-                            }
-                            return `${i.path.join('.')} is ${i.message?.toLowerCase() || 'invalid' }.`
-                        }).join('\n'))
-                } catch (e) {
-                    return new Error(message)
-                }
-            }
+            if (message) return new Error(message)
 
             delete data?.limitError
             delete data?.error
