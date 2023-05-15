@@ -352,6 +352,50 @@ export interface StaticIPRequest {
     disableSSL?: boolean
 }
 
+export type DatabaseOutput = { partKey: string, sortKey: string, data?: any }
+export interface ReadDatabaseResponse extends OperationResponse {
+    data?: DatabaseOutput
+}
+
+export interface QueryDatabaseResponse extends OperationResponse {
+    data?: { items?: DatabaseOutput[], nextToken?: string }
+}
+
+export interface GetLookupKeyResponse extends OperationResponse {
+    data?: { instanceId: string }
+}
+
+export interface ListInstanceIdsResponse extends OperationResponse {
+    data?: { instanceIds: string[], nextToken?: string }
+}
+
+export interface ListFilesResponse extends OperationResponse {
+    data?: { files: string[], nextToken?: string }
+}
+
+export interface BulkImportResponse extends OperationResponse {
+    data?: { execution: string, startDate?: string }
+}
+
+export interface ModelError { inputModel?: string, queryStringModel?: string }
+export interface MethodDefinitionSummary extends ModelError {
+    name: string,
+    type: string,
+    outputModel?: string,
+    errorModel?: string,
+}
+
+export interface GetInstanceResponse extends OperationResponse {
+    data?: {
+        newInstance: boolean
+        instanceId: string
+        init?: ModelError
+        get?: ModelError
+        methods: MethodDefinitionSummary[],
+        response?: any
+    }
+}
+
 export interface OperationsInput extends ReadOnlyOperationsInput {
     setMemory?: SetMemory[]
     deleteMemory?: GetMemory[]
@@ -377,15 +421,15 @@ export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
     getFromSortedSet?: OperationResponse[]
     querySortedSet?: OperationResponse[]
-    readDatabase?: OperationResponse[]
-    queryDatabase?: OperationResponse[]
+    readDatabase?: ReadDatabaseResponse[]
+    queryDatabase?: QueryDatabaseResponse[]
     getFile?: OperationResponse[]
-    getLookUpKey?: OperationResponse[]
-    bulkImport?: OperationResponse[]
+    getLookUpKey?: GetLookupKeyResponse[]
+    bulkImport?: BulkImportResponse[]
     methodCall?: CloudObjectResponse[]
-    getInstance?: CloudObjectResponse[]
-    listInstanceIds?: OperationResponse[]
-    listFiles?: CloudObjectResponse[]
+    getInstance?: GetInstanceResponse[]
+    listInstanceIds?: ListInstanceIdsResponse[]
+    listFiles?: ListFilesResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
     request?: OperationResponse[],
