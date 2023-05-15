@@ -101,6 +101,10 @@ export interface Schedule {
 export interface Task {
     classId?: string
     instanceId?: string
+    lookupKey?: {
+        name: string
+        value: string
+    }
     payload?: any
     method: string
     after: number
@@ -184,6 +188,7 @@ export interface SetFileOperation extends GetFile {
     large: boolean
 }
 export interface LookUpKey {
+    classId?: string
     key: {
         name: string
         value: string
