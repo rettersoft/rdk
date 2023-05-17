@@ -101,6 +101,10 @@ export interface Schedule {
 export interface Task {
     classId?: string
     instanceId?: string
+    lookupKey?: {
+        name: string
+        value: string
+    }
     payload?: any
     method: string
     after: number
@@ -164,6 +168,10 @@ export interface LookUpKey {
         name: string
         value: string
     }
+}
+
+export interface GetLookUpKey extends LookUpKey {
+    classId?: string
 }
 
 /**
@@ -240,7 +248,7 @@ export interface ReadOnlyOperationsInput {
     readDatabase?: ReadDatabase[]
     queryDatabase?: QueryDatabase[]
     getFile?: GetFile[]
-    getLookUpKey?: LookUpKey[]
+    getLookUpKey?: GetLookUpKey[]
     bulkImport?: BulkImport[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
