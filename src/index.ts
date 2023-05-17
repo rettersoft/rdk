@@ -398,8 +398,8 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
 
 export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
-    readDatabase?: OperationResponse[]
-    queryDatabase?: OperationResponse[]
+    readDatabase?: ReadDatabaseResponse[]
+    queryDatabase?: QueryDatabaseResponse[]
     getFile?: OperationResponse[]
     getLookUpKey?: GetLookupKeyResponse[]
     bulkImport?: BulkImportResponse[]
