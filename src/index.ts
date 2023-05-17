@@ -304,7 +304,7 @@ export enum StaticIPHttpMethod {
 export interface StaticIPCallback {
     projectId: string
     classId: string
-    instanceId: string
+    instanceId?: string
     methodName: string
 }
 export interface StaticIPRequest {
