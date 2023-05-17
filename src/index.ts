@@ -101,6 +101,10 @@ export interface Schedule {
 export interface Task {
     classId?: string
     instanceId?: string
+    lookupKey?: {
+        name: string
+        value: string
+    }
     payload?: any
     method: string
     after: number
@@ -123,30 +127,6 @@ export interface IncrementMemory {
     path?: string
     value: number
 }
-export interface GetFromSortedSet {
-    setName: string
-    sortKey: string
-}
-export interface RemoveFromSortedSet {
-    setName: string
-    sortKey: string
-}
-
-export interface AddToSortedSet {
-    setName: string
-    sortKey: string
-    data: Record<string, unknown>
-}
-export interface QuerySortedSet {
-    setName: string
-    beginsWith?: string
-    greaterOrEqual?: string
-    lessOrEqual?: string
-    reverse?: boolean
-    nextToken?: string
-    limit?: number
-}
-
 export interface GetFile {
     filename: string
 }
@@ -188,6 +168,10 @@ export interface LookUpKey {
         name: string
         value: string
     }
+}
+
+export interface GetLookUpKey extends LookUpKey {
+    classId?: string
 }
 
 /**
@@ -261,12 +245,10 @@ export interface DeleteInstance {
 
 export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
-    getFromSortedSet?: GetFromSortedSet[]
-    querySortedSet?: QuerySortedSet[]
     readDatabase?: ReadDatabase[]
     queryDatabase?: QueryDatabase[]
     getFile?: GetFile[]
-    getLookUpKey?: LookUpKey[]
+    getLookUpKey?: GetLookUpKey[]
     bulkImport?: BulkImport[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
@@ -274,7 +256,6 @@ export interface ReadOnlyOperationsInput {
     listFiles?: ListFiles[]
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
-    request?: StaticIPRequest[]
     httpRequest?: StaticIPRequest[]
 }
 
@@ -331,7 +312,7 @@ export enum StaticIPHttpMethod {
 export interface StaticIPCallback {
     projectId: string
     classId: string
-    instanceId: string
+    instanceId?: string
     methodName: string
 }
 export interface StaticIPRequest {
@@ -400,8 +381,6 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     setMemory?: SetMemory[]
     deleteMemory?: GetMemory[]
     incrementMemory?: IncrementMemory[]
-    addToSortedSet?: AddToSortedSet[]
-    removeFromSortedSet?: GetFromSortedSet[]
     writeToDatabase?: WriteToDatabase[]
     removeFromDatabase?: RemoveFromDatabase[]
     setFile?: (SetFile | SetFileOperation)[]
@@ -419,10 +398,8 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
 
 export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
-    getFromSortedSet?: OperationResponse[]
-    querySortedSet?: OperationResponse[]
-    readDatabase?: ReadDatabaseResponse[]
-    queryDatabase?: QueryDatabaseResponse[]
+    readDatabase?: OperationResponse[]
+    queryDatabase?: OperationResponse[]
     getFile?: OperationResponse[]
     getLookUpKey?: GetLookupKeyResponse[]
     bulkImport?: BulkImportResponse[]
@@ -432,7 +409,6 @@ export interface ReadonlyOperationsOutput {
     listFiles?: ListFilesResponse[]
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
-    request?: OperationResponse[],
     httpRequest?: OperationResponse[],
     deleteInstance?: CloudObjectResponse[]
 }
@@ -441,8 +417,6 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     setMemory?: OperationResponse[]
     deleteMemory?: OperationResponse[]
     incrementMemory?: OperationResponse[]
-    addToSortedSet?: OperationResponse[]
-    removeFromSortedSet?: OperationResponse[]
     writeToDatabase?: OperationResponse[]
     removeFromDatabase?: OperationResponse[]
     setFile?: OperationResponse[]
@@ -474,7 +448,6 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     config: Configuration
     version: number
     state: State<PUB, PRIV, USER, ROLE>
-    request: Request<I>
     response: Response<O>
     schedule: Schedule[]
     tasks: Task[]
@@ -505,7 +478,7 @@ export function init(params: { url: string; context: Context; level: number; ocL
 function calculateSize(data: string) {
     return new TextEncoder().encode(data).length
 }
-async function callOperationApi(payload: OperationsInput): Promise<OperationsOutput> {
+async function callOperationApi(payload: OperationsInput): Promise<OperationsOutput | Error> {
     // if (concurrentLambdaCount > concurrentLambdaCountLimit) {
     //     throw new Error(`Cannot send more than ${concurrentLambdaCountLimit} operations without pipeline`);
     // }
@@ -522,18 +495,15 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     // TODO! custom httpAgent?
     return axios.post(rdkUrl!, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
-            const e = data.error || data.limitError
-            if (e) throw new Error(e)
+            const message = data.error || data.limitError
+            if (message) return new Error(message)
 
             delete data?.limitError
             delete data?.error
             // concurrentLambdaCount--
             return data as OperationsOutput
         })
-        .catch((e) => {
-            // concurrentLambdaCount--
-            return e as OperationsOutput
-        })
+        .catch((e) => e)
 }
 
 export default class CloudObjectsOperator {
@@ -548,7 +518,11 @@ export default class CloudObjectsOperator {
     }
 
     private async sendSingleOperation(input: any, operationType: string) {
-        return callOperationApi({ [operationType]: [input] }).then((r) => r[operationType]?.pop())
+        return callOperationApi({ [operationType]: [input] }).then((r) => {
+            if (r instanceof Error) return { success: false, error: r.message }
+
+            return r[operationType]?.pop()
+        })
     }
 
     /**
@@ -718,48 +692,6 @@ export default class CloudObjectsOperator {
     }
     /**
      *
-     * Adds a value to the given sorted set with the given sort key
-     * @param {AddToSortedSet} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
-    async addToSortedSet(input: AddToSortedSet): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.addToSortedSet.name)
-    }
-    /**
-     *
-     * Gets the value of a sort key from the given sorted set
-     * @param {AddToSortedSet} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
-    async getFromSortedSet(input: GetFromSortedSet): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.getFromSortedSet.name)
-    }
-
-    /**
-     *
-     * Removes the given sort key from the given sorted set
-     * @param {RemoveFromSortedSet} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
-    async removeFromSortedSet(input: RemoveFromSortedSet): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.removeFromSortedSet.name)
-    }
-    /**
-     *
-     * Queries the given sorted set
-     * @param {QuerySortedSet} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
-    async querySortedSet(input: QuerySortedSet): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.querySortedSet.name)
-    }
-
-    /**
-     *
      * Gets file
      * @param {GetFile} input
      * @return {*}  {(Promise<OperationResponse | undefined>)}
@@ -917,10 +849,6 @@ export default class CloudObjectsOperator {
     }
     // * </database>
 
-    async request(input: StaticIPRequest): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.request.name)
-    }
-
     async httpRequest(input: StaticIPRequest): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.httpRequest.name)
     }
@@ -1064,57 +992,6 @@ export class CloudObjectsPipeline {
         return this
     }
 
-    /**
-     *
-     * Adds a value to the given sorted set with the given sort key
-     * @param {AddToSortedSet} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    addToSortedSet(input: AddToSortedSet): CloudObjectsPipeline {
-        if (!this.payload.addToSortedSet) this.payload.addToSortedSet = []
-        this.payload.addToSortedSet.push(input)
-        return this
-    }
-
-    /**
-     *
-     * Gets the value of a sort key from the given sorted set
-     * @param {AddToSortedSet} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    getFromSortedSet(input: GetFromSortedSet): CloudObjectsPipeline {
-        if (!this.payload.getFromSortedSet) this.payload.getFromSortedSet = []
-        this.payload.getFromSortedSet.push(input)
-        return this
-    }
-
-    /**
-     *
-     * Removes the given sort key from the given sorted set
-     * @param {RemoveFromSortedSet} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    removeFromSortedSet(input: RemoveFromSortedSet): CloudObjectsPipeline {
-        if (!this.payload.removeFromSortedSet) this.payload.removeFromSortedSet = []
-        this.payload.removeFromSortedSet.push(input)
-        return this
-    }
-    /**
-     *
-     * Queries the given sorted set
-     * @param {QuerySortedSet} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    querySortedSet(input: QuerySortedSet): CloudObjectsPipeline {
-        if (!this.payload.querySortedSet) this.payload.querySortedSet = []
-        this.payload.querySortedSet.push(input)
-        return this
-    }
-
     writeToDatabase(input: WriteToDatabase): CloudObjectsPipeline {
         if (!this.payload.writeToDatabase) this.payload.writeToDatabase = []
         this.payload.writeToDatabase.push(input)
@@ -1136,12 +1013,6 @@ export class CloudObjectsPipeline {
     queryDatabase(input: QueryDatabase): CloudObjectsPipeline {
         if (!this.payload.queryDatabase) this.payload.queryDatabase = []
         this.payload.queryDatabase.push(input)
-        return this
-    }
-
-    request(input: StaticIPRequest): CloudObjectsPipeline {
-        if (!this.payload.request) this.payload.request = []
-        this.payload.request.push(input)
         return this
     }
 
@@ -1295,8 +1166,10 @@ export class CloudObjectsPipeline {
 
         let promise = callOperationApi(this.payload)
         if (large) {
-            promise = promise.then((r) =>
-                Promise.all(
+            promise = promise.then((r) => {
+                if (r instanceof Error) return r
+
+                return Promise.all(
                     r.setFile!.map((r: OperationResponse, i) => {
                         console.log('setFilePipelineReturn: ', JSON.stringify(r))
                         if (!r.success) return r
@@ -1309,10 +1182,16 @@ export class CloudObjectsPipeline {
                             .then(() => ({ success: true } as OperationResponse))
                             .catch((e) => ({ success: false, error: e.message } as OperationResponse))
                     }),
-                ).then((setFile) => ({ ...r, setFile })),
-            )
+                ).then((setFile) => ({ ...r, setFile }))
+            })
         }
         return promise.then((r) => {
+            if (r instanceof Error)
+                return Object.keys(this.payload).reduce((final, key) => {
+                    final[key] = this.payload[key].map(() => ({ success: false, error: r.message }))
+                    return final
+                }, {})
+
             this.payload = {}
             if (r.getFile) {
                 return Promise.all(
