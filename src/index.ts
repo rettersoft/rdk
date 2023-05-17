@@ -90,14 +90,6 @@ export interface State<PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE =
     role?: ROLE
 }
 
-export interface Schedule {
-    classId?: string
-    instanceId?: string
-    payload?: any
-    method: string
-    after: number
-    retryConfig?: RetryConfig
-}
 export interface Task {
     classId?: string
     instanceId?: string
@@ -219,13 +211,6 @@ export interface BulkImport {
     getInstance?: GetInstance[],
     methodCall?: MethodCall[],
 }
-
-export interface InitResponse<O = any> {
-    state?: State
-    config?: Configuration
-    response?: Response<O>
-}
-
 
 export interface GenerateCustomToken {
     userId: string
@@ -431,25 +416,19 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     terminateSession?: TerminateSession[]
 }
 
-export interface StepResponse<T = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
-    state?: State<PUB, PRIV, USER, ROLE>
-    response?: Response<T>
-}
-
 export interface RioEvent {
     name: string
     payload: Record<string, any>
 }
 
-export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState>
-    extends StepResponse<O, PUB, PRIV, USER, ROLE> {
+export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
     context: Context
     env: KeyValue
     config: Configuration
     version: number
     state: State<PUB, PRIV, USER, ROLE>
+    request: Request<I>
     response: Response<O>
-    schedule: Schedule[]
     tasks: Task[]
     events: RioEvent[]
 }
