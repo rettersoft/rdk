@@ -413,7 +413,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deployClass?: OperationResponse[]
     deployProject?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
-    terminateSession?: TerminateSession[]
+    terminateSession?: OperationResponse[]
 }
 
 export interface RioEvent {
