@@ -352,11 +352,11 @@ export interface StaticIPRequest {
     disableSSL?: boolean
 }
 
-export type DatabaseOutput = { partKey: string, sortKey: string, data?: any }
 export interface ReadDatabaseResponse extends OperationResponse {
-    data?: DatabaseOutput
+    data?: { part: string, sort: string, data?: any }
 }
 
+export type DatabaseOutput = { partKey: string, sortKey: string, data?: any }
 export interface QueryDatabaseResponse extends OperationResponse {
     data?: { items?: DatabaseOutput[], nextToken?: string }
 }
