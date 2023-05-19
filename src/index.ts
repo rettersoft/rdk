@@ -989,12 +989,6 @@ export class CloudObjectsPipeline {
         return this
     }
 
-    incrementDatabase(input: IncrementDatabase): CloudObjectsPipeline {
-        if (!this.payload.incrementDatabase) this.payload.incrementDatabase = []
-        this.payload.incrementDatabase.push(input)
-        return this
-    }
-
     readDatabase(input: ReadDatabase): CloudObjectsPipeline {
         if (!this.payload.readDatabase) this.payload.readDatabase = []
         this.payload.readDatabase.push(input)
