@@ -260,7 +260,7 @@ export interface WriteToDatabase {
 export interface IncrementDatabase {
     partKey: string
     sortKey: string
-    path: string
+    path?: string
     value: number
     memory?: boolean
 }
