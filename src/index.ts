@@ -257,6 +257,13 @@ export interface WriteToDatabase {
     expireAt?: number
     data: Record<string, unknown>
 }
+export interface IncrementDatabase {
+    partKey: string
+    sortKey: string
+    path?: string
+    value: number
+    memory?: boolean
+}
 export interface RemoveFromDatabase {
     partKey: string
     sortKey: string
@@ -367,6 +374,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deleteMemory?: GetMemory[]
     incrementMemory?: IncrementMemory[]
     writeToDatabase?: WriteToDatabase[]
+    incrementDatabase?: IncrementDatabase[]
     removeFromDatabase?: RemoveFromDatabase[]
     setFile?: (SetFile | SetFileOperation)[]
     deleteFile?: GetFile[]
@@ -403,6 +411,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteMemory?: OperationResponse[]
     incrementMemory?: OperationResponse[]
     writeToDatabase?: OperationResponse[]
+    incrementDatabase?: OperationResponse[]
     removeFromDatabase?: OperationResponse[]
     setFile?: OperationResponse[]
     deleteFile?: OperationResponse[]
@@ -816,6 +825,9 @@ export default class CloudObjectsOperator {
     // * <database>
     async writeToDatabase(input: WriteToDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.writeToDatabase.name)
+    }
+    async incrementDatabase(input: IncrementDatabase): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.incrementDatabase.name)
     }
     async readDatabase(input: ReadDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.readDatabase.name)
