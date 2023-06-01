@@ -223,8 +223,11 @@ export interface TerminateSession {
     identity?: string
 }
 
-export interface DeleteInstance {
+export interface DeleteClass {
     classId: string
+}
+
+export interface DeleteInstance extends DeleteClass {
     instanceId: string
 }
 
@@ -387,6 +390,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     invalidateCache?: InvalidateCache[]
     terminateSession?: TerminateSession[]
     deleteInstance?: DeleteInstance[]
+    deleteClass?: DeleteClass[]
 }
 
 export interface ReadonlyOperationsOutput {
@@ -403,7 +407,6 @@ export interface ReadonlyOperationsOutput {
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
     httpRequest?: OperationResponse[],
-    deleteInstance?: CloudObjectResponse[]
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -423,6 +426,8 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deployProject?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
     terminateSession?: OperationResponse[]
+    deleteInstance?: CloudObjectResponse[]
+    deleteClass?: CloudObjectResponse[]
 }
 
 export interface RioEvent {
@@ -513,17 +518,13 @@ export default class CloudObjectsOperator {
         })
     }
 
-    /**
-     *
-     * Terminate ProjectUser session (or all sessions)
-     * @param {DeleteInstance} input
-     * @return {*}  {(Promise<GenerateCustomTokenResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
     async deleteInstance(input: DeleteInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteInstance.name)
     }
 
+    async deleteClass(input: DeleteClass): Promise<CloudObjectResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteClass.name)
+    }
 
     /**
      *
@@ -863,16 +864,15 @@ export class CloudObjectsPipeline {
         return this
     }
 
-    /**
-     *
-     * Gets the instance id coressponds to the given lookup key
-     * @param {TerminateSession} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
     deleteInstance(input: DeleteInstance): CloudObjectsPipeline {
         if (!this.payload.deleteInstance) this.payload.deleteInstance = []
         this.payload.deleteInstance.push(input)
+        return this
+    }
+
+    deleteClass(input: DeleteClass): CloudObjectsPipeline {
+        if (!this.payload.deleteClass) this.payload.deleteClass = []
+        this.payload.deleteClass.push(input)
         return this
     }
 
