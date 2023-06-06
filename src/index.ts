@@ -350,8 +350,8 @@ export interface BulkImportResponse extends OperationResponse {
     data?: { execution: string, startDate?: string }
 }
 
-export interface ModelError { inputModel?: string, queryStringModel?: string }
-export interface MethodDefinitionSummary extends ModelError {
+export interface MethodDefinitionCommonModels { inputModel?: string, queryStringModel?: string }
+export interface MethodDefinitionSummary extends MethodDefinitionCommonModels {
     name: string,
     type: string,
     outputModel?: string,
@@ -362,8 +362,8 @@ export interface GetInstanceResponse extends OperationResponse {
     data?: {
         newInstance: boolean
         instanceId: string
-        init?: ModelError
-        get?: ModelError
+        init?: MethodDefinitionCommonModels
+        get?: MethodDefinitionCommonModels
         methods: MethodDefinitionSummary[],
         response?: any
     }
@@ -554,7 +554,7 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof OperationResponse
      */
-    async bulkImport(input: BulkImport): Promise<OperationResponse | undefined> {
+    async bulkImport(input: BulkImport): Promise<BulkImportResponse | undefined> {
         return this.sendSingleOperation(input, this.bulkImport.name)
     }
 
@@ -576,15 +576,15 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<CloudObjectResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-    async getInstance(input: GetInstance): Promise<CloudObjectResponse | undefined> {
+    async getInstance(input: GetInstance): Promise<GetInstanceResponse | undefined> {
         return this.sendSingleOperation(input, this.getInstance.name)
     }
 
-    async listInstanceIds(input: ListInstanceIds): Promise<CloudObjectResponse | undefined> {
+    async listInstanceIds(input: ListInstanceIds): Promise<ListInstanceIdsResponse | undefined> {
         return this.sendSingleOperation(input, this.listInstanceIds.name)
     }
 
-    async listFiles(input: ListFiles): Promise<CloudObjectResponse | undefined> {
+    async listFiles(input: ListFiles): Promise<ListFilesResponse | undefined> {
         return this.sendSingleOperation(input, this.listFiles.name)
     }
 
@@ -606,7 +606,7 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-    async getLookUpKey(input: GetLookUpKey): Promise<OperationResponse | undefined> {
+    async getLookUpKey(input: GetLookUpKey): Promise<GetLookupKeyResponse | undefined> {
         return this.sendSingleOperation(input, this.getLookUpKey.name)
     }
 
@@ -829,13 +829,13 @@ export default class CloudObjectsOperator {
     async incrementDatabase(input: IncrementDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.incrementDatabase.name)
     }
-    async readDatabase(input: ReadDatabase): Promise<OperationResponse | undefined> {
+    async readDatabase(input: ReadDatabase): Promise<ReadDatabaseResponse | undefined> {
         return this.sendSingleOperation(input, this.readDatabase.name)
     }
     async removeFromDatabase(input: RemoveFromDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.removeFromDatabase.name)
     }
-    async queryDatabase(input: QueryDatabase): Promise<OperationResponse | undefined> {
+    async queryDatabase(input: QueryDatabase): Promise<QueryDatabaseResponse | undefined> {
         return this.sendSingleOperation(input, this.queryDatabase.name)
     }
     // * </database>
