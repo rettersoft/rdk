@@ -606,7 +606,7 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-    async getLookUpKey(input: LookUpKey): Promise<GetLookupKeyResponse | undefined> {
+    async getLookUpKey(input: GetLookUpKey): Promise<GetLookupKeyResponse | undefined> {
         return this.sendSingleOperation(input, this.getLookUpKey.name)
     }
 
@@ -896,7 +896,7 @@ export class CloudObjectsPipeline {
      * @return {*}  {CloudObjectsPipeline}
      * @memberof CloudObjectsPipeline
      */
-    getLookUpKey(input: LookUpKey): CloudObjectsPipeline {
+    getLookUpKey(input: GetLookUpKey): CloudObjectsPipeline {
         if (!this.payload.getLookUpKey) this.payload.getLookUpKey = []
         this.payload.getLookUpKey.push(input)
         return this
