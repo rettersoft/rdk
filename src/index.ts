@@ -722,7 +722,6 @@ export default class CloudObjectsOperator {
         let promise = this.sendSingleOperation(setFileOperation, this.setFile.name)
         if (setFileOperation.large) {
             promise = promise.then((r: OperationResponse) => {
-                console.log("setFileReturn: ", JSON.stringify(r))
                 if (!r.success) return r
                 return axios
                     .put(r.data.url, input.body, {
@@ -1162,7 +1161,6 @@ export class CloudObjectsPipeline {
 
                 return Promise.all(
                     r.setFile!.map((r: OperationResponse, i) => {
-                        console.log('setFilePipelineReturn: ', JSON.stringify(r))
                         if (!r.success) return r
                         const { body } = this.payload.setFile![i]
                         return axios
