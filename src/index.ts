@@ -46,6 +46,11 @@ export interface Request<T = any> {
     body?: T
     headers: KeyValueString
     queryStringParams: Record<string, any>
+    pathParameters?: {
+        path: string
+        rule?: string
+        params?: KeyValueString
+    }
 }
 
 export interface Context {
@@ -73,11 +78,6 @@ export interface Context {
     clientOs?: string
     targetServiceIds?: string[]
     relatedUserId?: string
-    pathParameters?: {
-        path: string
-        rule?: string
-        params?: KeyValueString
-    }
 }
 
 type UserState = { [userId: string]: { [key: string]: any } }
