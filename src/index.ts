@@ -271,6 +271,9 @@ export interface RemoveFromDatabase {
     partKey: string
     sortKey: string
 }
+export interface RemovePartitionFromDatabase {
+    partKey: string
+}
 export interface QueryDatabase {
     partKey: string
     beginsWith?: string
@@ -834,6 +837,9 @@ export default class CloudObjectsOperator {
     }
     async removeFromDatabase(input: RemoveFromDatabase): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.removeFromDatabase.name)
+    }
+    async removePartitionFromDatabase(input: RemovePartitionFromDatabase): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.removePartitionFromDatabase.name)
     }
     async queryDatabase(input: QueryDatabase): Promise<QueryDatabaseResponse | undefined> {
         return this.sendSingleOperation(input, this.queryDatabase.name)
