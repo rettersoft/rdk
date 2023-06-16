@@ -361,8 +361,8 @@ export interface MethodDefinitionSummary extends MethodDefinitionCommonModels {
     errorModel?: string,
 }
 
-export interface GetInstanceResponse extends OperationResponse {
-    data?: {
+export interface GetInstanceResponse extends CloudObjectResponse {
+    body?: {
         newInstance: boolean
         instanceId: string
         init?: MethodDefinitionCommonModels
