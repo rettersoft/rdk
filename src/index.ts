@@ -227,6 +227,10 @@ export interface DeleteClass {
     classId: string
 }
 
+export interface DeleteAllInstances {
+    classId: string
+}
+
 export interface DeleteInstance extends DeleteClass {
     instanceId: string
 }
@@ -393,6 +397,7 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     invalidateCache?: InvalidateCache[]
     terminateSession?: TerminateSession[]
     deleteInstance?: DeleteInstance[]
+    deleteAllInstances?: DeleteAllInstances[]
     deleteClass?: DeleteClass[]
 }
 
@@ -430,6 +435,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     invalidateCache?: InvalidateCacheResponse[]
     terminateSession?: OperationResponse[]
     deleteInstance?: CloudObjectResponse[]
+    deleteAllInstances?: CloudObjectResponse[]
     deleteClass?: CloudObjectResponse[]
 }
 
@@ -523,6 +529,10 @@ export default class CloudObjectsOperator {
 
     async deleteInstance(input: DeleteInstance): Promise<CloudObjectResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteInstance.name)
+    }
+
+    async deleteAllInstances(input: DeleteAllInstances): Promise<CloudObjectResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteAllInstances.name)
     }
 
     async deleteClass(input: DeleteClass): Promise<CloudObjectResponse | undefined> {
@@ -850,8 +860,6 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.httpRequest.name)
     }
 }
-
-
 export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
 
@@ -872,6 +880,12 @@ export class CloudObjectsPipeline {
     deleteInstance(input: DeleteInstance): CloudObjectsPipeline {
         if (!this.payload.deleteInstance) this.payload.deleteInstance = []
         this.payload.deleteInstance.push(input)
+        return this
+    }
+
+    deleteAllInstances(input: DeleteInstance): CloudObjectsPipeline {
+        if (!this.payload.deleteAllInstances) this.payload.deleteAllInstances = []
+        this.payload.deleteAllInstances.push(input)
         return this
     }
 
