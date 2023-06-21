@@ -435,7 +435,7 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     invalidateCache?: InvalidateCacheResponse[]
     terminateSession?: OperationResponse[]
     deleteInstance?: CloudObjectResponse[]
-    deleteAllInstances?: CloudObjectResponse[]
+    deleteAllInstances?: OperationResponse[]
     deleteClass?: CloudObjectResponse[]
 }
 
@@ -531,7 +531,7 @@ export default class CloudObjectsOperator {
         return this.sendSingleOperation(input, this.deleteInstance.name)
     }
 
-    async deleteAllInstances(input: DeleteAllInstances): Promise<CloudObjectResponse | undefined> {
+    async deleteAllInstances(input: DeleteAllInstances): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteAllInstances.name)
     }
 
