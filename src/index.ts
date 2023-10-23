@@ -121,6 +121,7 @@ export interface IncrementMemory {
 }
 export interface GetFile {
     filename: string
+    returnSignedURL?: boolean
 }
 export interface DeployClass {
     classId: string
@@ -700,18 +701,17 @@ export default class CloudObjectsOperator {
      * @memberof CloudObjectsOperator
      */
     async getFile(input: GetFile): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.getFile.name).then((g) => {
-            if (g.success && g.extraData?.url) {
-                return axios.get(g.extraData.url)
-                    .then((r) => ({
-                        ...g,
-                        extraData: undefined,
-                        data: r.data
-                    }))
-                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
-            }
-            return g
-        })
+        const result = await this.sendSingleOperation(input, this.getFile.name)
+        if (result.success && result.extraData?.url && !input.returnSignedURL) {
+            return axios.get(result.extraData.url)
+                .then((r) => ({
+                    ...result,
+                    extraData: undefined,
+                    data: r.data
+                }))
+                .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+        }
+        return result
     }
 
     /**
@@ -1204,8 +1204,9 @@ export class CloudObjectsPipeline {
             this.payload = {}
             if (r.getFile) {
                 return Promise.all(
-                    (r.getFile as OperationExtraResponse[]).map((g) => {
-                        if (g.success && g.extraData?.url) {
+                    (r.getFile as OperationExtraResponse[]).map((g, index) => {
+                        const getFileInput = this.payload.getFile?.[index]
+                        if (g.success && g.extraData?.url && !getFileInput?.returnSignedURL) {
                             return axios
                                 .get(g.extraData.url)
                                 .then((r) => ({
