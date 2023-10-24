@@ -148,10 +148,12 @@ export interface DeleteDependency {
     dependencyName: string
 }
 
-export interface SetFile extends GetFile {
+export interface SetFile {
+    filename: string
     body: string
 }
-export interface SetFileOperation extends GetFile {
+export interface SetFileOperation {
+    filename: string
     body?: string
     size: number
     large: boolean
@@ -406,7 +408,7 @@ export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
     readDatabase?: ReadDatabaseResponse[]
     queryDatabase?: QueryDatabaseResponse[]
-    getFile?: OperationResponse[]
+    getFile?: OperationExtraResponse[]
     getLookUpKey?: GetLookupKeyResponse[]
     bulkImport?: BulkImportResponse[]
     methodCall?: CloudObjectResponse[]
@@ -1204,7 +1206,7 @@ export class CloudObjectsPipeline {
             this.payload = {}
             if (r.getFile) {
                 return Promise.all(
-                    (r.getFile as OperationExtraResponse[]).map((g, index) => {
+                    r.getFile.map((g, index) => {
                         const getFileInput = this.payload.getFile?.[index]
                         if (g.success && g.extraData?.url && !getFileInput?.returnSignedURL) {
                             return axios
