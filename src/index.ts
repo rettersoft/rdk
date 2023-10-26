@@ -15,8 +15,10 @@ export interface OperationResponse {
     data?: any
     error?: string
 }
-export interface OperationExtraResponse extends OperationResponse {
-    extraData?: any
+export interface GetFileResponse extends OperationResponse {
+    extraData?: {
+        url: string
+    }
 }
 
 export interface GenerateCustomTokenResponse extends OperationResponse {
@@ -408,7 +410,7 @@ export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
     readDatabase?: ReadDatabaseResponse[]
     queryDatabase?: QueryDatabaseResponse[]
-    getFile?: OperationExtraResponse[]
+    getFile?: GetFileResponse[]
     getLookUpKey?: GetLookupKeyResponse[]
     bulkImport?: BulkImportResponse[]
     methodCall?: CloudObjectResponse[]
@@ -702,7 +704,7 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-    async getFile(input: GetFile): Promise<OperationResponse | undefined> {
+    async getFile(input: GetFile): Promise<GetFileResponse | undefined> {
         const result = await this.sendSingleOperation(input, this.getFile.name)
         if (result.success && result.extraData?.url && !input.returnSignedURL) {
             return axios.get(result.extraData.url)
