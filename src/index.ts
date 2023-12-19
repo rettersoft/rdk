@@ -125,10 +125,6 @@ export interface GetFile {
     filename: string
     returnSignedURL?: boolean
 }
-export interface DeployClass {
-    classId: string
-    force?: boolean
-}
 export interface DeployProject {
     force?: boolean
 }
@@ -397,7 +393,6 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deleteLookUpKey?: LookUpKey[]
     upsertDependency?: UpsertDependency[]
     deleteDependency?: DeleteDependency[]
-    deployClass?: DeployClass[]
     deployProject?: DeployProject[]
     invalidateCache?: InvalidateCache[]
     terminateSession?: TerminateSession[]
@@ -435,7 +430,6 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteLookUpKey?: OperationResponse[]
     upsertDependency?: OperationResponse[]
     deleteDependency?: OperationResponse[]
-    deployClass?: OperationResponse[]
     deployProject?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
     terminateSession?: OperationResponse[]
@@ -765,19 +759,6 @@ export default class CloudObjectsOperator {
      */
     async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteFile.name)
-    }
-
-    /**
-     *
-     * Deploys an existing class
-     * @param {DeployClass} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
-    // TODO unused delete this 
-    // @ts-ignore
-    async deployClass(input: DeployClass): Promise<OperationResponse | undefined> {
-        return Promise.resolve({ success: true } as OperationResponse)
     }
 
     /**
@@ -1124,19 +1105,6 @@ export class CloudObjectsPipeline {
     getState(input: GetInstance): CloudObjectsPipeline {
         if (!this.payload.getState) this.payload.getState = []
         this.payload.getState.push(input)
-        return this
-    }
-
-    /**
-     *
-     * Deploys an existing class
-     * @param {DeployClass} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    // TODO unused delete this
-    // @ts-ignore
-    deployClass(input: DeployClass): CloudObjectsPipeline {
         return this
     }
 
