@@ -167,6 +167,10 @@ export interface GetLookUpKey extends LookUpKey {
     classId?: string
 }
 
+export interface ProjectAlias {
+    alias: string
+}
+
 /**
  * lookupKey or instanceId must be given
  *
@@ -242,6 +246,7 @@ export interface ReadOnlyOperationsInput {
     queryDatabase?: QueryDatabase[]
     getFile?: GetFile[]
     getLookUpKey?: GetLookUpKey[]
+    getProjectAlias?: ProjectAlias[]
     bulkImport?: BulkImport[]
     methodCall?: MethodCall[]
     getInstance?: GetInstance[]
@@ -349,6 +354,10 @@ export interface GetLookupKeyResponse extends OperationResponse {
     data?: { instanceId: string }
 }
 
+export interface GetProjectAliasResponse extends OperationResponse {
+    data?: { projectId: string }
+}
+
 export interface ListInstanceIdsResponse extends OperationResponse {
     data?: { instanceIds: string[], nextToken?: string }
 }
@@ -391,6 +400,8 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deleteFile?: GetFile[]
     setLookUpKey?: LookUpKey[]
     deleteLookUpKey?: LookUpKey[]
+    setProjectAlias?: ProjectAlias[]
+    deleteProjectAlias?: ProjectAlias[]
     upsertDependency?: UpsertDependency[]
     deleteDependency?: DeleteDependency[]
     deployProject?: DeployProject[]
@@ -407,6 +418,7 @@ export interface ReadonlyOperationsOutput {
     queryDatabase?: QueryDatabaseResponse[]
     getFile?: GetFileResponse[]
     getLookUpKey?: GetLookupKeyResponse[]
+    getProjectAlias?: GetProjectAliasResponse[]
     bulkImport?: BulkImportResponse[]
     methodCall?: CloudObjectResponse[]
     getInstance?: GetInstanceResponse[]
@@ -428,6 +440,8 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteFile?: OperationResponse[]
     setLookUpKey?: OperationResponse[]
     deleteLookUpKey?: OperationResponse[]
+    setProjectAlias?: OperationResponse[]
+    deleteProjectAlias?: OperationResponse[]
     upsertDependency?: OperationResponse[]
     deleteDependency?: OperationResponse[]
     deployProject?: OperationResponse[]
@@ -436,11 +450,6 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteInstance?: CloudObjectResponse[]
     deleteAllInstances?: OperationResponse[]
     deleteClass?: CloudObjectResponse[]
-}
-
-export interface RioEvent {
-    name: string
-    payload: Record<string, any>
 }
 
 export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = UserState, ROLE = RoleState> {
@@ -452,7 +461,6 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     request: Request<I>
     response: Response<O>
     tasks: Task[]
-    events: RioEvent[]
 }
 
 let rdkUrl: string | undefined
@@ -616,7 +624,7 @@ export default class CloudObjectsOperator {
      *
      * Gets the instance id coressponds to the given lookup key
      * @param {LookUpKey} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @return {*}  {(Promise<GetLookupKeyResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
     async getLookUpKey(input: GetLookUpKey): Promise<GetLookupKeyResponse | undefined> {
@@ -643,6 +651,39 @@ export default class CloudObjectsOperator {
      */
     async deleteLookUpKey(input: LookUpKey): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteLookUpKey.name)
+    }
+
+    /**
+     *
+     * Gets the project id corresponds to the given project alias
+     * @param {ProjectAlias} input
+     * @return {*}  {(Promise<GetProjectAliasResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async getProjectAlias(input: ProjectAlias): Promise<GetProjectAliasResponse | undefined> {
+        return this.sendSingleOperation(input, this.getProjectAlias.name)
+    }
+
+    /**
+     *
+     * Sets the current project id to the given project alias
+     * @param {ProjectAlias} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async setProjectAlias(input: ProjectAlias): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.setProjectAlias.name)
+    }
+
+    /**
+     *
+     * Deletes the given project alias
+     * @param {ProjectAlias} input
+     * @return {*}  {(Promise<OperationResponse | undefined>)}
+     * @memberof CloudObjectsOperator
+     */
+    async deleteProjectAlias(input: ProjectAlias): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.deleteProjectAlias.name)
     }
 
     /**
@@ -929,6 +970,45 @@ export class CloudObjectsPipeline {
     deleteLookUpKey(input: LookUpKey): CloudObjectsPipeline {
         if (!this.payload.deleteLookUpKey) this.payload.deleteLookUpKey = []
         this.payload.deleteLookUpKey.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Gets the project id corresponds to the given project alias
+     * @param {ProjectAlias} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+    getProjectAlias(input: ProjectAlias): CloudObjectsPipeline {
+        if (!this.payload.getProjectAlias) this.payload.getProjectAlias = []
+        this.payload.getProjectAlias.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Sets the current project id to the given project alias
+     * @param {ProjectAlias} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+    setProjectAlias(input: ProjectAlias): CloudObjectsPipeline {
+        if (!this.payload.setProjectAlias) this.payload.setProjectAlias = []
+        this.payload.setProjectAlias.push(input)
+        return this
+    }
+
+    /**
+     *
+     * Deletes the given project alias
+     * @param {ProjectAlias} input
+     * @return {*}  {CloudObjectsPipeline}
+     * @memberof CloudObjectsPipeline
+     */
+    deleteProjectAlias(input: ProjectAlias): CloudObjectsPipeline {
+        if (!this.payload.deleteProjectAlias) this.payload.deleteProjectAlias = []
+        this.payload.deleteProjectAlias.push(input)
         return this
     }
 
