@@ -975,45 +975,6 @@ export class CloudObjectsPipeline {
 
     /**
      *
-     * Gets the project id corresponds to the given project alias
-     * @param {ProjectAlias} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    getProjectAlias(input: ProjectAlias): CloudObjectsPipeline {
-        if (!this.payload.getProjectAlias) this.payload.getProjectAlias = []
-        this.payload.getProjectAlias.push(input)
-        return this
-    }
-
-    /**
-     *
-     * Sets the current project id to the given project alias
-     * @param {ProjectAlias} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    setProjectAlias(input: ProjectAlias): CloudObjectsPipeline {
-        if (!this.payload.setProjectAlias) this.payload.setProjectAlias = []
-        this.payload.setProjectAlias.push(input)
-        return this
-    }
-
-    /**
-     *
-     * Deletes the given project alias
-     * @param {ProjectAlias} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    deleteProjectAlias(input: ProjectAlias): CloudObjectsPipeline {
-        if (!this.payload.deleteProjectAlias) this.payload.deleteProjectAlias = []
-        this.payload.deleteProjectAlias.push(input)
-        return this
-    }
-
-    /**
-     *
      * Sets the value to the given key in memory
      * @param {SetMemory} input
      * @return {*}  {CloudObjectsPipeline}
