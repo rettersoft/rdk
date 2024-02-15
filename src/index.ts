@@ -75,6 +75,7 @@ export interface Context {
     culture?: string
     platform?: string
     userId?: string
+    customProjectId?: string
     sourceIP: string
     sessionId?: string
     clientOs?: string
