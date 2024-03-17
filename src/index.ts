@@ -272,6 +272,7 @@ export interface IncrementDatabase {
     path?: string
     value: number
     memory?: boolean
+    expireAt?: number,
 }
 export interface RemoveFromDatabase {
     partKey: string
