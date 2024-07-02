@@ -15,8 +15,10 @@ export interface OperationResponse {
     data?: any
     error?: string
 }
-export interface OperationExtraResponse extends OperationResponse {
-    extraData?: any
+export interface GetFileResponse extends OperationResponse {
+    extraData?: {
+        url: string
+    }
 }
 
 export interface GenerateCustomTokenResponse extends OperationResponse {
@@ -73,6 +75,7 @@ export interface Context {
     culture?: string
     platform?: string
     userId?: string
+    customProjectId?: string
     sourceIP: string
     sessionId?: string
     clientOs?: string
@@ -121,10 +124,7 @@ export interface IncrementMemory {
 }
 export interface GetFile {
     filename: string
-}
-export interface DeployClass {
-    classId: string
-    force?: boolean
+    returnSignedURL?: boolean
 }
 export interface DeployProject {
     force?: boolean
@@ -135,7 +135,7 @@ export interface InvalidateCache {
     instanceId?: string
 }
 export type Architecture = 'arm64' | 'x86_64' | 'x86_64,arm64' | 'arm64,x86_64'
-export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs16.x' | 'nodejs14.x,nodejs12.x'
+export type Runtime = 'nodejs12.x,nodejs14.x' | 'nodejs12.x' | 'nodejs14.x' | 'nodejs16.x' | 'nodejs20.x' | 'nodejs14.x,nodejs12.x'
 export interface UpsertDependency {
     dependencyName: string
     zipFile: Buffer
@@ -147,10 +147,12 @@ export interface DeleteDependency {
     dependencyName: string
 }
 
-export interface SetFile extends GetFile {
+export interface SetFile {
+    filename: string
     body: string
 }
-export interface SetFileOperation extends GetFile {
+export interface SetFileOperation {
+    filename: string
     body?: string
     size: number
     large: boolean
@@ -270,6 +272,7 @@ export interface IncrementDatabase {
     path?: string
     value: number
     memory?: boolean
+    expireAt?: number,
 }
 export interface RemoveFromDatabase {
     partKey: string
@@ -392,7 +395,6 @@ export interface OperationsInput extends ReadOnlyOperationsInput {
     deleteLookUpKey?: LookUpKey[]
     upsertDependency?: UpsertDependency[]
     deleteDependency?: DeleteDependency[]
-    deployClass?: DeployClass[]
     deployProject?: DeployProject[]
     invalidateCache?: InvalidateCache[]
     terminateSession?: TerminateSession[]
@@ -405,7 +407,7 @@ export interface ReadonlyOperationsOutput {
     getMemory?: OperationResponse[]
     readDatabase?: ReadDatabaseResponse[]
     queryDatabase?: QueryDatabaseResponse[]
-    getFile?: OperationResponse[]
+    getFile?: GetFileResponse[]
     getLookUpKey?: GetLookupKeyResponse[]
     bulkImport?: BulkImportResponse[]
     methodCall?: CloudObjectResponse[]
@@ -430,7 +432,6 @@ export interface OperationsOutput extends ReadonlyOperationsOutput {
     deleteLookUpKey?: OperationResponse[]
     upsertDependency?: OperationResponse[]
     deleteDependency?: OperationResponse[]
-    deployClass?: OperationResponse[]
     deployProject?: OperationResponse[]
     invalidateCache?: InvalidateCacheResponse[]
     terminateSession?: OperationResponse[]
@@ -699,19 +700,18 @@ export default class CloudObjectsOperator {
      * @return {*}  {(Promise<OperationResponse | undefined>)}
      * @memberof CloudObjectsOperator
      */
-    async getFile(input: GetFile): Promise<OperationResponse | undefined> {
-        return this.sendSingleOperation(input, this.getFile.name).then((g) => {
-            if (g.success && g.extraData?.url) {
-                return axios.get(g.extraData.url)
-                    .then((r) => ({
-                        ...g,
-                        extraData: undefined,
-                        data: r.data
-                    }))
-                    .catch((e) => ({ success: false, error: e.message } as OperationResponse))
-            }
-            return g
-        })
+    async getFile(input: GetFile): Promise<GetFileResponse | undefined> {
+        const result = await this.sendSingleOperation(input, this.getFile.name)
+        if (result.success && result.extraData?.url && !input.returnSignedURL) {
+            return axios.get(result.extraData.url)
+                .then((r) => ({
+                    ...result,
+                    extraData: undefined,
+                    data: r.data
+                }))
+                .catch((e) => ({ success: false, error: e.message } as OperationResponse))
+        }
+        return result
     }
 
     /**
@@ -761,19 +761,6 @@ export default class CloudObjectsOperator {
      */
     async deleteFile(input: GetFile): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.deleteFile.name)
-    }
-
-    /**
-     *
-     * Deploys an existing class
-     * @param {DeployClass} input
-     * @return {*}  {(Promise<OperationResponse | undefined>)}
-     * @memberof CloudObjectsOperator
-     */
-    // TODO unused delete this 
-    // @ts-ignore
-    async deployClass(input: DeployClass): Promise<OperationResponse | undefined> {
-        return Promise.resolve({ success: true } as OperationResponse)
     }
 
     /**
@@ -1125,19 +1112,6 @@ export class CloudObjectsPipeline {
 
     /**
      *
-     * Deploys an existing class
-     * @param {DeployClass} input
-     * @return {*}  {CloudObjectsPipeline}
-     * @memberof CloudObjectsPipeline
-     */
-    // TODO unused delete this
-    // @ts-ignore
-    deployClass(input: DeployClass): CloudObjectsPipeline {
-        return this
-    }
-
-    /**
-     *
      * Invalidates cache for given path
      * @param {InvalidateCache} input
      * @return {*}  {CloudObjectsPipeline}
@@ -1162,17 +1136,17 @@ export class CloudObjectsPipeline {
             large: false,
         }))
         const totalSize = setFileOperations?.reduce((sum, o) => sum + o.size, 0)
+        const files: string[] = []
         const large = totalSize && totalSize > 5242880
         if (large) {
             setFileOperations?.forEach((s) => {
+                files.push(s.body || '')
                 s.large = true
                 s.body = undefined
             })
         }
 
-        if (setFileOperations) {
-            this.payload.setFile = setFileOperations
-        }
+        if (setFileOperations) this.payload.setFile = setFileOperations
 
         let promise = callOperationApi(this.payload)
         if (large) {
@@ -1182,9 +1156,8 @@ export class CloudObjectsPipeline {
                 return Promise.all(
                     r.setFile!.map((r: OperationResponse, i) => {
                         if (!r.success) return r
-                        const { body } = this.payload.setFile![i]
                         return axios
-                            .put(r.data.url, body, {
+                            .put(r.data.url, files[i], {
                                 maxBodyLength: fileSizeLimit,
                                 maxContentLength: fileSizeLimit,
                             })
@@ -1204,8 +1177,9 @@ export class CloudObjectsPipeline {
             this.payload = {}
             if (r.getFile) {
                 return Promise.all(
-                    (r.getFile as OperationExtraResponse[]).map((g) => {
-                        if (g.success && g.extraData?.url) {
+                    r.getFile.map((g, index) => {
+                        const getFileInput = this.payload.getFile?.[index]
+                        if (g.success && g.extraData?.url && !getFileInput?.returnSignedURL) {
                             return axios
                                 .get(g.extraData.url)
                                 .then((r) => ({
