@@ -1136,17 +1136,17 @@ export class CloudObjectsPipeline {
             large: false,
         }))
         const totalSize = setFileOperations?.reduce((sum, o) => sum + o.size, 0)
+        const files: string[] = []
         const large = totalSize && totalSize > 5242880
         if (large) {
             setFileOperations?.forEach((s) => {
+                files.push(s.body || '')
                 s.large = true
                 s.body = undefined
             })
         }
 
-        if (setFileOperations) {
-            this.payload.setFile = setFileOperations
-        }
+        if (setFileOperations) this.payload.setFile = setFileOperations
 
         let promise = callOperationApi(this.payload)
         if (large) {
@@ -1156,9 +1156,8 @@ export class CloudObjectsPipeline {
                 return Promise.all(
                     r.setFile!.map((r: OperationResponse, i) => {
                         if (!r.success) return r
-                        const { body } = this.payload.setFile![i]
                         return axios
-                            .put(r.data.url, body, {
+                            .put(r.data.url, files[i], {
                                 maxBodyLength: fileSizeLimit,
                                 maxContentLength: fileSizeLimit,
                             })
