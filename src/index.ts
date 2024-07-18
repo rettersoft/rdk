@@ -336,6 +336,7 @@ export interface StaticIPRequest {
         password: string
     }
     disableSSL?: boolean
+    config?: Record<string, any>
 }
 
 export interface ReadDatabaseResponse extends OperationResponse {
