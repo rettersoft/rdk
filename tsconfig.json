@@ -22,6 +22,7 @@
         "moduleResolution": "node",
         "rootDirs": ["./", "./src"],
         "typeRoots": ["./types", "./@types", "node_modules/@types"],
+        "types": ["node", "buffer"],
         "esModuleInterop": true,
         "preserveConstEnums": true,
         "suppressImplicitAnyIndexErrors": true,
