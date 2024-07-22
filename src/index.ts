@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import axios from 'axios'
 export interface KeyValue {
     [key: string]: any
@@ -471,12 +472,18 @@ const fileSizeLimit = 250000000
 // let usageCheckCounter = 0;
 let operationCount = 0
 // let concurrentLambdaCount = 0;
-export function init(params: { url: string; context: Context; level: number; ocLimit?: number; clcLimit?: number }) {
+let asyncContext :AsyncLocalStorage<Context> | null
+
+export function init(params: { url: string, asyncContext: AsyncLocalStorage<Context> }) {
     rdkUrl = params.url
-    context = params.context
-    level = params.level
+    asyncContext = params.asyncContext
     // operationCountMilestone = params.ocLimit || 100
     // concurrentLambdaCountLimit = params.clcLimit || 10
+}
+function getAsyncContext() {
+    if (!asyncContext) throw new Error('Async context is not initialized')
+
+    return asyncContext.getStore()
 }
 
 function calculateSize(data: string) {
@@ -495,9 +502,12 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     //     checkUsage = true
     // }
 
+    console.log("getAsyncContext", getAsyncContext())
+
     // concurrentLambdaCount++
     // TODO! custom httpAgent?
-    return axios.post(rdkUrl!, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
+    // todo DELETE LEVEL !!!
+    return axios.post(rdkUrl!, { context: getAsyncContext(), level: 1, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
             const message = data.error || data.limitError
             if (message) return new Error(message)
