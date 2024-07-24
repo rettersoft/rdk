@@ -120,7 +120,6 @@ export interface SetMemory {
 }
 export interface IncrementMemory {
     key: string
-    path?: string
     value: number
 }
 export interface GetFile {
