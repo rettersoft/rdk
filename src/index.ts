@@ -502,8 +502,6 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     //     checkUsage = true
     // }
 
-    console.log("getAsyncContext", getAsyncContext())
-
     // concurrentLambdaCount++
     // TODO! custom httpAgent?
     // todo DELETE LEVEL !!!
