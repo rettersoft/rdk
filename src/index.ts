@@ -504,6 +504,7 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     // concurrentLambdaCount++
     // TODO! custom httpAgent?
     // todo DELETE LEVEL !!!
+    console.log("rdk requesting ", rdkUrl, JSON.stringify({ context: getAsyncContext(), level: 1, input: { data: payload, rdkVersion: '2.0.0' }}))
     return axios.post(rdkUrl!, { context: getAsyncContext(), level: 1, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
             const message = data.error || data.limitError
@@ -514,7 +515,10 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
             // concurrentLambdaCount--
             return data as OperationsOutput
         })
-        .catch((e) => e)
+        .catch((e) => {
+            console.log('rdk error', JSON.stringify(e))
+            return e
+        })
 }
 
 export default class CloudObjectsOperator {
