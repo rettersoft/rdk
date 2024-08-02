@@ -82,6 +82,7 @@ export interface Context {
     clientOs?: string
     targetServiceIds?: string[]
     relatedUserId?: string
+    tokenExpiresAt?: number
 }
 
 type UserState = { [userId: string]: { [key: string]: any } }
