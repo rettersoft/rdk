@@ -58,6 +58,7 @@ export interface Request<T = any> {
 
 export interface Context {
     requestId: string
+    traceId: string
     projectId: string
     action: string
     identity: string
@@ -505,7 +506,9 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
     // concurrentLambdaCount++
     // TODO! custom httpAgent?
     // todo DELETE LEVEL !!!
-    return axios.post(rdkUrl!, { context: getAsyncContext(), level: 1, input: { data: payload, rdkVersion: '2.0.0' } })
+    const context = getAsyncContext()
+    return axios.post(rdkUrl!, { context, level: 1, input: { data: payload, rdkVersion: '2.0.0' } },
+        { headers: { 'X-Trace-Id': context?.traceId } })
         .then(({ data }) => {
             const message = data.error || data.limitError
             if (message) return new Error(message)
