@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import axios from 'axios'
+import https from 'https'
 export interface KeyValue {
     [key: string]: any
 }
@@ -756,7 +757,10 @@ export default class CloudObjectsOperator {
                         },
                         maxBodyLength: fileSizeLimit,
                         maxContentLength: fileSizeLimit,
-                    })
+                        httpsAgent: new https.Agent({
+                            rejectUnauthorized: false
+                        })
+                })
                     .then(() => ({ success: true } as OperationResponse))
                     .catch((e) => ({ success: false, error: e.message } as OperationResponse))
             })
@@ -803,6 +807,9 @@ export default class CloudObjectsOperator {
                     },
                     maxBodyLength: fileSizeLimit,
                     maxContentLength: fileSizeLimit,
+                    httpsAgent: new https.Agent({
+                        rejectUnauthorized: false
+                    }),
                 })
                 .then(() =>
                     this.sendSingleOperation({ ...input, commit: true, zipFile: undefined }, this.upsertDependency.name).catch(
