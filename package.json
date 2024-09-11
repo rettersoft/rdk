@@ -1,6 +1,6 @@
 {
     "name": "@retter/rdk",
-    "version": "2.0.15",
+    "version": "2.0.18",
     "description": "Retter Development Kit",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -9,7 +9,8 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "tsc -b",
         "prepare": "npm run build",
-        "bump": "bump patch package.json --commit --tag"
+        "bump": "bump patch package.json --commit --tag",
+        "clean-install": "npm cache clean --force && rm -rf node_modules package-lock.json && npm install"
     },
     "repository": {
         "type": "git",
@@ -18,7 +19,7 @@
     "author": "Retter",
     "license": "ISC",
     "dependencies": {
-        "axios": "1.3.3"
+        "axios": "1.7.7"
     },
     "devDependencies": {
         "@types/node": "17.0.7",

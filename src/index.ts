@@ -338,6 +338,7 @@ export interface StaticIPRequest {
     }
     disableSSL?: boolean
     config?: Record<string, any>
+    returnAsBase64?: boolean // sync only
 }
 
 export interface ReadDatabaseResponse extends OperationResponse {
