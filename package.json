@@ -1,6 +1,6 @@
 {
     "name": "@retter/rdk",
-    "version": "3.0.3-development",
+    "version": "3.0.4-development",
     "description": "Retter Development Kit",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
