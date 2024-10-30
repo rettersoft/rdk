@@ -238,6 +238,14 @@ export interface DeleteInstance extends DeleteClass {
     instanceId: string
 }
 
+export interface SqlQuery {
+    username: string
+    password: string
+    database: string
+    options?: Record<string, any>
+    query: string
+}
+
 export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
     readDatabase?: ReadDatabase[]
@@ -252,6 +260,7 @@ export interface ReadOnlyOperationsInput {
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
     httpRequest?: StaticIPRequest[]
+    sql?: SqlQuery[]
 }
 
 // * <database>
@@ -849,6 +858,10 @@ export default class CloudObjectsOperator {
     async httpRequest(input: StaticIPRequest): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.httpRequest.name)
     }
+
+    async sql(input: SqlQuery): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.sql.name)
+    }
 }
 export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
@@ -1019,6 +1032,12 @@ export class CloudObjectsPipeline {
     httpRequest(input: StaticIPRequest): CloudObjectsPipeline {
         if (!this.payload.httpRequest) this.payload.httpRequest = []
         this.payload.httpRequest.push(input)
+        return this
+    }
+
+    sql(input: SqlQuery): CloudObjectsPipeline {
+        if (!this.payload.sql) this.payload.sql = []
+        this.payload.sql.push(input)
         return this
     }
 
