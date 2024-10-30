@@ -429,6 +429,7 @@ export interface ReadonlyOperationsOutput {
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
     httpRequest?: OperationResponse[],
+    sql?: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
