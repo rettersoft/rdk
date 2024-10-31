@@ -238,12 +238,29 @@ export interface DeleteInstance extends DeleteClass {
     instanceId: string
 }
 
+export enum SqlQueryTypes {
+    SELECT = 'SELECT',
+    INSERT = 'INSERT',
+    UPDATE = 'UPDATE',
+    BULKUPDATE = 'BULKUPDATE',
+    BULKDELETE = 'BULKDELETE',
+    DELETE = 'DELETE',
+    UPSERT = 'UPSERT',
+    VERSION = 'VERSION',
+    SHOWTABLES = 'SHOWTABLES',
+    SHOWINDEXES = 'SHOWINDEXES',
+    DESCRIBE = 'DESCRIBE',
+    RAW = 'RAW',
+    FOREIGNKEYS = 'FOREIGNKEYS',
+}
+
 export interface SqlQuery {
     username: string
     password: string
     database: string
     options?: Record<string, any>
     query: string
+    queryType?: SqlQueryTypes
 }
 
 export interface ReadOnlyOperationsInput {
