@@ -554,6 +554,7 @@ export default class CloudObjectsOperator {
         return callOperationApi({ [operationType]: [input] }).then((r) => {
             if (r instanceof Error) return { success: false, error: r.message }
 
+            // @ts-ignore
             return r[operationType]?.pop()
         })
     }
@@ -1210,6 +1211,7 @@ export class CloudObjectsPipeline {
         return promise.then((r) => {
             if (r instanceof Error)
                 return Object.keys(this.payload).reduce((final, key) => {
+                    // @ts-ignore
                     final[key] = this.payload[key].map(() => ({ success: false, error: r.message }))
                     return final
                 }, {})
