@@ -238,6 +238,31 @@ export interface DeleteInstance extends DeleteClass {
     instanceId: string
 }
 
+export enum SqlQueryTypes {
+    SELECT = 'SELECT',
+    INSERT = 'INSERT',
+    UPDATE = 'UPDATE',
+    BULKUPDATE = 'BULKUPDATE',
+    BULKDELETE = 'BULKDELETE',
+    DELETE = 'DELETE',
+    UPSERT = 'UPSERT',
+    VERSION = 'VERSION',
+    SHOWTABLES = 'SHOWTABLES',
+    SHOWINDEXES = 'SHOWINDEXES',
+    DESCRIBE = 'DESCRIBE',
+    RAW = 'RAW',
+    FOREIGNKEYS = 'FOREIGNKEYS',
+}
+
+export interface SqlQuery {
+    username: string
+    password: string
+    database: string
+    options?: Record<string, any>
+    query: string
+    queryType?: SqlQueryTypes
+}
+
 export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
     readDatabase?: ReadDatabase[]
@@ -252,6 +277,7 @@ export interface ReadOnlyOperationsInput {
     getState?: GetInstance[]
     generateCustomToken?: GenerateCustomToken[]
     httpRequest?: StaticIPRequest[]
+    sql?: SqlQuery[]
 }
 
 // * <database>
@@ -420,6 +446,7 @@ export interface ReadonlyOperationsOutput {
     getState?: CloudObjectResponse[]
     generateCustomToken?: GenerateCustomTokenResponse[]
     httpRequest?: OperationResponse[],
+    sql?: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -527,6 +554,7 @@ export default class CloudObjectsOperator {
         return callOperationApi({ [operationType]: [input] }).then((r) => {
             if (r instanceof Error) return { success: false, error: r.message }
 
+            // @ts-ignore
             return r[operationType]?.pop()
         })
     }
@@ -849,6 +877,10 @@ export default class CloudObjectsOperator {
     async httpRequest(input: StaticIPRequest): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.httpRequest.name)
     }
+
+    async sql(input: SqlQuery): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.sql.name)
+    }
 }
 export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
@@ -1022,6 +1054,12 @@ export class CloudObjectsPipeline {
         return this
     }
 
+    sql(input: SqlQuery): CloudObjectsPipeline {
+        if (!this.payload.sql) this.payload.sql = []
+        this.payload.sql.push(input)
+        return this
+    }
+
     /**
      *
      * Gets file
@@ -1173,6 +1211,7 @@ export class CloudObjectsPipeline {
         return promise.then((r) => {
             if (r instanceof Error)
                 return Object.keys(this.payload).reduce((final, key) => {
+                    // @ts-ignore
                     final[key] = this.payload[key].map(() => ({ success: false, error: r.message }))
                     return final
                 }, {})
