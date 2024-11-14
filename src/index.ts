@@ -285,6 +285,7 @@ export interface ReadDatabase {
     partKey: string
     sortKey: string
     memory?: boolean
+    filterExpired: boolean
 }
 export interface WriteToDatabase {
     partKey: string
