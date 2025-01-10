@@ -263,6 +263,81 @@ export interface SqlQuery {
     queryType?: SqlQueryTypes
 }
 
+export interface BaseMongoQuery {
+    filter: any;
+    options?: Record<string, any>;
+}
+
+export interface MongoFind extends BaseMongoQuery {
+    skip?: number;
+    limit?: number;
+}
+
+export interface MongoQueryWithUpdate extends BaseMongoQuery {
+    update: any;
+}
+
+export interface MongoInsertOne {
+    document: any;
+    options?: Record<string, any>;
+}
+
+export interface MongoInsertMany {
+    documents: any[];
+    options?: Record<string, any>;
+}
+
+export interface MongoAggregate {
+    pipeline?: Record<string, any>[];
+    options?: Record<string, any>;
+}
+
+export interface MongoDistinct {
+    key: string;
+    filter: any;
+}
+
+export interface MongoCountDocuments extends BaseMongoQuery {}
+
+/**
+ * Represents a request for performing MongoDB operations.
+ * 
+ * This interface supports various CRUD operations, including:
+ * - Query operations: `find`, `findOne`
+ * - Update operations: `findOneAndUpdate`, `updateOne`, `updateMany`
+ * - Delete operations: `findOneAndDelete`, `deleteOne`, `deleteMany`
+ * - Insert operations: `insertOne`, `insertMany`
+ * - Advanced operations: `aggregate`, `countDocuments`, `distinct`
+ * 
+ * Compatible with RIO version 2.1.21 and above.
+ *
+ * @export
+ * @interface MongoRequest
+ */
+export interface MongoRequest {
+    uri: string;
+    database: string;
+    collection: string;
+
+    find?: MongoFind;
+    findOne?: BaseMongoQuery;
+    findOneAndDelete?: BaseMongoQuery;
+    findOneAndUpdate?: MongoQueryWithUpdate;
+
+    updateOne?: MongoQueryWithUpdate;
+    updateMany?: MongoQueryWithUpdate;
+
+    deleteOne?: BaseMongoQuery;
+    deleteMany?: BaseMongoQuery;
+
+    insertOne?: MongoInsertOne;
+    insertMany?: MongoInsertMany;
+
+    aggregate?: MongoAggregate;
+    countDocuments?: MongoCountDocuments;
+    distinct?: MongoDistinct;
+}
+
 export interface ReadOnlyOperationsInput {
     getMemory?: GetMemory[]
     readDatabase?: ReadDatabase[]
@@ -278,6 +353,7 @@ export interface ReadOnlyOperationsInput {
     generateCustomToken?: GenerateCustomToken[]
     httpRequest?: StaticIPRequest[]
     sql?: SqlQuery[]
+    mongodb?: MongoRequest[]
 }
 
 // * <database>
@@ -448,6 +524,7 @@ export interface ReadonlyOperationsOutput {
     generateCustomToken?: GenerateCustomTokenResponse[]
     httpRequest?: OperationResponse[],
     sql?: OperationResponse[],
+    mongodb?: OperationResponse[],
 }
 
 export interface OperationsOutput extends ReadonlyOperationsOutput {
@@ -882,6 +959,10 @@ export default class CloudObjectsOperator {
     async sql(input: SqlQuery): Promise<OperationResponse | undefined> {
         return this.sendSingleOperation(input, this.sql.name)
     }
+
+    async mongodb(input: MongoRequest): Promise<OperationResponse | undefined> {
+        return this.sendSingleOperation(input, this.mongodb.name)
+    }
 }
 export class CloudObjectsPipeline {
     private payload: OperationsInput = {}
@@ -1058,6 +1139,12 @@ export class CloudObjectsPipeline {
     sql(input: SqlQuery): CloudObjectsPipeline {
         if (!this.payload.sql) this.payload.sql = []
         this.payload.sql.push(input)
+        return this
+    }
+
+    mongodb(input: MongoRequest): CloudObjectsPipeline {
+        if (!this.payload.mongodb) this.payload.mongodb = []
+        this.payload.mongodb.push(input)
         return this
     }
 
