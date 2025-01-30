@@ -219,6 +219,8 @@ export interface GenerateCustomToken {
     userId: string
     identity: string
     claims?: KeyValue
+    accessTokenTTL?: number // in seconds
+    refreshTokenTTL?: number // in seconds
 }
 
 export interface TerminateSession {
@@ -271,6 +273,8 @@ export interface BaseMongoQuery {
 export interface MongoFind extends BaseMongoQuery {
     skip?: number;
     limit?: number;
+    sort?: any;
+    project?: any;
 }
 
 export interface MongoQueryWithUpdate extends BaseMongoQuery {
