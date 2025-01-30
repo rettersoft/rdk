@@ -219,8 +219,8 @@ export interface GenerateCustomToken {
     userId: string
     identity: string
     claims?: KeyValue
-    accessTokenTTL?: number
-    refreshTokenTTL?: number
+    accessTokenTTL?: number // in seconds
+    refreshTokenTTL?: number // in seconds
 }
 
 export interface TerminateSession {
