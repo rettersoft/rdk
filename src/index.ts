@@ -263,6 +263,7 @@ export interface SqlQuery {
     options?: Record<string, any>
     query: string
     queryType?: SqlQueryTypes
+    queryOptions?: Record<string, any>
 }
 
 export interface BaseMongoQuery {
