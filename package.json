@@ -1,6 +1,6 @@
 {
     "name": "@retter/rdk",
-    "version": "2.0.34",
+    "version": "2.0.35",
     "description": "Retter Development Kit",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "author": "Retter",
     "license": "ISC",
     "dependencies": {
-        "axios": "1.12.2"
+        "axios": "1.13.6"
     },
     "devDependencies": {
         "@jsdevtools/version-bump-prompt": "6.1.0",
