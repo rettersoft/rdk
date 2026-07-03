@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { AsyncLocalStorage } from 'async_hooks'
 export interface KeyValue {
     [key: string]: any
 }
@@ -570,9 +571,37 @@ export interface Data<I = any, O = any, PUB = KeyValue, PRIV = KeyValue, USER = 
     events: RioEvent[]
 }
 
+// --- Per-invocation context binding ------------------------------------------------
+// Every rdk operation stamps the calling invocation's context (identity, classId,
+// requestId, level, …) onto its request. That context MUST belong to the invocation
+// that originated the call. Module-scoped variables are unsafe here: the user-extension
+// reuses one warm container — and one @retter/rdk module instance — across many
+// invocations, so a call that resumes after a Lambda freeze/thaw (e.g. a long method
+// that exceeded its sandbox timeout) or runs as a detached continuation would read
+// whatever the most recent init() set, bleeding another invocation's identity into the
+// call. AsyncLocalStorage binds the context to the async execution chain instead, so it
+// follows awaits/timers/continuations and cannot cross invocation boundaries.
+interface RdkStore {
+    url: string
+    context: Context
+    level: number
+}
+const rdkStore = new AsyncLocalStorage<RdkStore>()
+
+// Legacy module globals — retained ONLY as a fallback for callers that still use init()
+// without runWithContext(). Preserves prior behaviour (no regression) until every
+// project bundles an @retter/rdk new enough for the user-extension to drive via
+// runWithContext().
 let rdkUrl: string | undefined
 let context: Context | undefined
 let level: number | undefined
+
+// Resolve the active binding: prefer the async-bound store, fall back to init() globals.
+function resolveStore(): RdkStore {
+    const store = rdkStore.getStore()
+    if (store) return store
+    return { url: rdkUrl as string, context: context as Context, level: level as number }
+}
 
 const fileSizeLimit = 250000000
 
@@ -589,6 +618,20 @@ export function init(params: { url: string; context: Context; level: number; ocL
     level = params.level
     // operationCountMilestone = params.ocLimit || 100
     // concurrentLambdaCountLimit = params.clcLimit || 10
+}
+
+/**
+ * Runs `fn` with the given RIO request context bound to the async execution context.
+ * Every rdk operation invoked inside `fn` — directly, or from any awaited/detached
+ * continuation it spawns — reads THIS context via AsyncLocalStorage, so it cannot be
+ * clobbered by another invocation that reuses the same warm container/module instance.
+ * This is the race-free replacement for init(); init() remains only as a fallback.
+ */
+export function runWithContext<T>(
+    params: { url: string; context: Context; level: number },
+    fn: () => Promise<T>,
+): Promise<T> {
+    return rdkStore.run({ url: params.url, context: params.context, level: params.level }, fn)
 }
 
 function calculateSize(data: string) {
@@ -609,7 +652,10 @@ async function callOperationApi(payload: OperationsInput): Promise<OperationsOut
 
     // concurrentLambdaCount++
     // TODO! custom httpAgent?
-    return axios.post(rdkUrl!, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
+    // Read the active context at send time. Synchronous within methodCall()/pipeline.send(),
+    // so it captures the originating invocation's store (or the init() fallback) correctly.
+    const { url, context, level } = resolveStore()
+    return axios.post(url, { context, level, input: { data: payload, rdkVersion: '2.0.0' } })
         .then(({ data }) => {
             const message = data.error || data.limitError
             if (message) return new Error(message)
