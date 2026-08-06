@@ -448,6 +448,7 @@ export interface StaticIPRequest {
     disableSSL?: boolean
     config?: Record<string, any>
     returnAsBase64?: boolean // sync only
+    requestDataIsBase64?: boolean // decode data.requestData from base64 into a Buffer, so binary bodies survive
 }
 
 export interface ReadDatabaseResponse extends OperationResponse {
