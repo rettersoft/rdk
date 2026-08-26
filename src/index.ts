@@ -423,6 +423,8 @@ export enum StaticIPHttpMethod {
     'LINK' = 'LINK',
     'unlink' = 'unlink',
     'UNLINK' = 'UNLINK',
+    'query' = 'query',
+    'QUERY' = 'QUERY',
 }
 export interface StaticIPCallback {
     projectId: string
@@ -430,12 +432,17 @@ export interface StaticIPCallback {
     instanceId?: string
     methodName: string
 }
+export interface StaticIPReturnURL {
+    url: string
+    headers?: Record<string, string>
+}
 export interface StaticIPRequest {
     url: string
     data: {
         requestData?: any
         returnData?: any
         returnEndpoint?: StaticIPCallback
+        returnURL?: StaticIPReturnURL
     }
     headers?: Record<string, string>
     method?: StaticIPHttpMethod
